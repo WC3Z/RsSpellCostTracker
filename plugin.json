@@ -1,0 +1,10 @@
+{
+    "name": "Stall Cost Tracker",
+    "version": "1.0.0",
+    "contactEmailAddress": "wc3zrs@gmail.com",
+    "requiredDependencies": {
+        "gepl": "gepl",
+        "prettyui": 6398181
+    },
+    "hasRibbonIcon": true
+}
