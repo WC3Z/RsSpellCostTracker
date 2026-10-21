@@ -6,24 +6,22 @@ local cost_tracker_window = {}
 
 local window
 local text
+local line_count = 0
 
 -- The main game screen, so the window can be moved anywhere over the game.
 local function game_area()
     return ui.Interfaces:GetComponent(id.Component.TOPLEVEL_V2__GAME_AREA)
 end
 
--- Opens the window, or brings it to the front if it is already open.
-function cost_tracker_window.open(lines)
-    if window then
-        window:Show()
-        text:set(lines)
-        return
-    end
-
+-- bounds: optional { x, y, width, height }; without it prettyui's default position is used.
+local function create(lines, bounds)
+    bounds = bounds or { width = 260, height = 160 }
     window = prettyui.Window.new(game_area(), {
         title = "Spell costs",
-        width = 260,
-        height = 160,
+        x = bounds.x,
+        y = bounds.y,
+        width = bounds.width,
+        height = bounds.height,
         resizable = true,
         -- prettyui's default minimum is 220 x 140, which is bigger than a single cost line needs.
         minWidth = 120,
@@ -36,21 +34,51 @@ function cost_tracker_window.open(lines)
     })
     text = TextLines.new(window)
     text:set(lines)
+    line_count = #lines
+end
+
+local function remove()
+    window:Destroy()
+    window = nil
+    text = nil
+end
+
+-- prettyui's window only ever grows its scrollable height, and text rows can't
+-- be removed from it. Blanked rows would keep the scrollbar after lines are
+-- hidden, so with fewer lines the window is rebuilt in the same place and size.
+local function show_lines(lines)
+    if #lines < line_count then
+        local root = window.root
+        local bounds = { x = root.x, y = root.y, width = root.width, height = root.height }
+        remove()
+        create(lines, bounds)
+        return
+    end
+    text:set(lines)
+    line_count = #lines
+end
+
+-- Opens the window, or brings it to the front if it is already open.
+function cost_tracker_window.open(lines)
+    if window then
+        window:Show()
+        show_lines(lines)
+        return
+    end
+    create(lines)
 end
 
 -- Shows the latest lines if the window is open.
 function cost_tracker_window.refresh(lines)
-    if text then
-        text:set(lines)
+    if window then
+        show_lines(lines)
     end
 end
 
 -- Removes the window, e.g. when the plugin is turned off.
 function cost_tracker_window.destroy()
     if window then
-        window:Destroy()
-        window = nil
-        text = nil
+        remove()
     end
 end
 

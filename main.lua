@@ -38,15 +38,14 @@ local function open_cost_tracker()
     cost_tracker_window.open(window_lines())
 end
 
-local function on_cast(ability_id)
-    local spell = tracker:on_cast(ability_id, equipment.worn_item_ids())
-    if spell then
+local function on_cast(spell)
+    if tracker:on_cast(spell, equipment.worn_item_ids()) then
         saved_totals.save(spell, tracker:spell_totals(spell))
         refresh_views()
     end
 end
 
-cast_listener.start(tracker:ability_ids(), on_cast)
+cast_listener.start(settings.spells, on_cast)
 content_view.start({
     cost_lines = page_lines,
     settings_changed = refresh_views,

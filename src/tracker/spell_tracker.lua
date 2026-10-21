@@ -77,25 +77,6 @@ function SpellTracker:restore(saved)
     end
 end
 
--- Returns the ability ids of all spells that have one, as a set.
-function SpellTracker:ability_ids()
-    local ids = {}
-    for _, spell in ipairs(self.spells) do
-        if spell.ability_id then
-            ids[spell.ability_id] = true
-        end
-    end
-    return ids
-end
-
-local function find_spell(spells, ability_id)
-    for _, spell in ipairs(spells) do
-        if spell.ability_id == ability_id then
-            return spell
-        end
-    end
-end
-
 -- Each cast is priced when it happens, so later price changes on the
 -- Grand Exchange do not change what earlier casts cost. Without a price the
 -- configured fallback price is used, and the rune is marked as estimated.
@@ -118,13 +99,10 @@ end
 -- Lord of Bones is a Necromancy ability. Cast while wearing Necromancy gear it
 -- is part of normal Necromancy combat; cast without it, the player is only
 -- using it to stall. With only_stalls on, just the stalls are counted.
+-- spell: one of the spells option
 -- worn_equipment: { [slot] = item id }
 -- Returns the counted spell, or nil when the cast wasn't counted.
-function SpellTracker:on_cast(ability_id, worn_equipment)
-    local spell = find_spell(self.spells, ability_id)
-    if spell == nil then
-        return nil
-    end
+function SpellTracker:on_cast(spell, worn_equipment)
     if spell.can_stall and self.only_stalls() and necro_gear.is_wearing(worn_equipment, self.necro_gear) then
         return nil
     end

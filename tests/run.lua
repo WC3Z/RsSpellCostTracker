@@ -3,6 +3,7 @@ package.path = "./?.lua;" .. package.path
 
 local test_files = {
     "tests/tracker/necro_gear_test",
+    "tests/tracker/cast_detection_test",
     "tests/tracker/spell_tracker_test",
     "tests/tracker/totals_text_test",
     "tests/game/prices_test",

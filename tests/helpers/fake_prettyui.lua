@@ -20,7 +20,12 @@ end
 
 -- Checkboxes are kept by value, in the order they were added.
 function Container:AddCheckboxButton(buttons, options)
-    local checkbox = { text = buttons[1].text, selected = buttons[1].selected, on_change = options.onChange }
+    local checkbox = {
+        text = buttons[1].text,
+        selected = buttons[1].selected,
+        tooltip = buttons[1].tooltip,
+        on_change = options.onChange,
+    }
     self.checkboxes[buttons[1].value] = checkbox
     table.insert(self.checkbox_order, buttons[1].value)
 end
@@ -57,9 +62,11 @@ function fake_prettyui.install()
     local function constructor(kind)
         return {
             new = function(parent, options)
+                options = options or {}
                 local container = setmetatable({
-                    kind = kind, parent = parent, options = options or {},
+                    kind = kind, parent = parent, options = options,
                     texts = {}, buttons = {}, checkboxes = {}, checkbox_order = {}, shown = 0,
+                    root = { x = options.x or 80, y = options.y or 80, width = options.width, height = options.height },
                 }, Container)
                 table.insert(created, container)
                 return container

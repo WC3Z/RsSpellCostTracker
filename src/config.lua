@@ -3,7 +3,10 @@
 return {
     -- The spells whose cost is tracked, in the order they are shown.
     -- key:        used for the spell's show/hide setting
-    -- ability_id: value of COMBATV2_JUST_USED_ABILITY when the spell is cast
+    -- ability_id: for abilities, the value of COMBATV2_JUST_USED_ABILITY when it is cast
+    -- timer:      for spells that aren't abilities, where their timer is kept:
+    --             the variable it is packed into, and its bits in that variable.
+    --             A cast is counted whenever the timer goes up.
     -- runes:      runes used by one cast, from the RuneScape Wiki
     -- can_stall:  the spell is cast to stall; with the "Only track Lord of Bones
     --             stalls" setting on, casts while wearing Necromancy gear are ignored
@@ -23,7 +26,7 @@ return {
         {
             key = "AnimateDead",
             name = "Animate Dead",
-            ability_id = nil, -- TODO: find in game
+            timer = { var = "COMBATV2_GENERIC_BASE_VAR_7", mask = 0xff000000, shift = 24 },
             runes = {
                 ["Earth rune"] = 30,
                 ["Death rune"] = 15,
@@ -34,7 +37,7 @@ return {
         {
             key = "Vampyrism",
             name = "Vampyrism",
-            ability_id = nil, -- TODO: find in game
+            timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0x3ff00, shift = 8 },
             runes = {
                 ["Fire rune"] = 40,
                 ["Death rune"] = 10,
@@ -45,7 +48,7 @@ return {
         {
             key = "Penance",
             name = "Penance",
-            ability_id = nil, -- TODO: find in game
+            timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0xff, shift = 0 },
             runes = {
                 ["Body rune"] = 30,
                 ["Chaos rune"] = 20,

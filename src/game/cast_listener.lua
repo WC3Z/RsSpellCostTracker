@@ -1,23 +1,19 @@
--- Listens for the game telling us an ability was just used.
+-- Listens for game variable changes that show a tracked spell was cast.
+local cast_detection = require("src/tracker/cast_detection")
+
 local cast_listener = {}
 
-local subscription_name = "spell-cost-tracker-ability-used"
+local subscription_name = "spell-cost-tracker-spell-cast"
 
--- Calls on_cast(ability_id) every time one of the given abilities is used.
--- ability_ids: set of ability ids, e.g. { [49072] = true }
--- The game reports each ability use by setting the COMBATV2_JUST_USED_ABILITY
--- variable to the ability's id, and VarTransmit fires for every variable change.
-function cast_listener.start(ability_ids, on_cast)
+-- Calls on_cast(spell) every time one of the given spells is cast.
+-- VarTransmit fires for every variable change; cast_detection decides which
+-- changes are casts.
+function cast_listener.start(spells, on_cast)
     Event.VarTransmit.Subscribe(subscription_name, function(event)
-        if event.var.configName ~= "COMBATV2_JUST_USED_ABILITY" then
-            return
+        local cast = cast_detection.cast_spells(spells, event.var.configName, event.oldValue, event.newValue)
+        for _, spell in ipairs(cast) do
+            on_cast(spell)
         end
-        -- TEMPORARY: prints every ability used, to find the ids of spells still missing one.
-        print("Ability used: " .. tostring(event.newValue))
-        if not ability_ids[event.newValue] then
-            return
-        end
-        on_cast(event.newValue)
     end)
 end
 

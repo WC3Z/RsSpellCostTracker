@@ -16,7 +16,12 @@ local text
 -- to that one setting. prettyui passes the new checked state as the 4th argument.
 local function add_checkbox(option)
     view:AddCheckboxButton({
-        { text = option.label, value = option.db_key, selected = player_settings.is_on(option) },
+        {
+            text = option.label,
+            value = option.db_key,
+            selected = player_settings.is_on(option),
+            tooltip = option.tooltip,
+        },
     }, {
         onChange = function(_, _, _, selected)
             player_settings.set(option, selected)

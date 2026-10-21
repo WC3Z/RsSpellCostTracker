@@ -63,6 +63,17 @@ function tests.opening_the_page_shows_the_settings_button_and_cost()
     content_view.stop()
 end
 
+function tests.only_stalls_checkbox_explains_itself_in_a_tooltip()
+    local subscriptions, created = install_fakes()
+    content_view.start(callbacks())
+
+    local view = open_page(subscriptions, created)
+
+    assert_helpers.equal(type(view.checkboxes.onlyLordOfBonesStalls.tooltip), "string")
+    assert_helpers.equal(view.checkboxes.showCasts.tooltip, nil)
+    content_view.stop()
+end
+
 function tests.checkboxes_show_the_saved_settings()
     local subscriptions, created, stored = install_fakes()
     stored.showRunes = false

@@ -89,12 +89,12 @@ function tests.a_restarted_tracker_continues_where_it_left_off()
     fake_persistent_db.install()
     local options = { spells = { darkness, penance }, get_price = function() return 10 end }
     local before = SpellTracker.new(options)
-    local spell = before:on_cast(48331, {})
+    local spell = before:on_cast(darkness, {})
     saved_totals.save(spell, before:spell_totals(spell))
 
     local after = SpellTracker.new(options)
     after:restore(saved_totals.load(options.spells))
-    after:on_cast(48331, {})
+    after:on_cast(darkness, {})
 
     local totals = after:spell_totals(darkness)
     assert_helpers.equal(totals.casts, 2)

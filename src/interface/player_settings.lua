@@ -8,10 +8,14 @@ local player_settings = {}
 -- name:   the part of the totals it controls, as used by totals_text.lines
 -- db_key: where the choice is saved in PersistentDB
 -- label:  the checkbox text
+-- tooltip: optional text shown when hovering over the checkbox
 
 -- Whether Lord of Bones casts made while wearing Necromancy gear are ignored.
 player_settings.only_stalls_option = {
-    db_key = "onlyLordOfBonesStalls", label = "Only track Lord of Bones stalls",
+    db_key = "onlyLordOfBonesStalls",
+    label = "Only track Lord of Bones stalls",
+    tooltip = "Only counts Lord of Bones casts made without any Necromancy gear on, "
+        .. "i.e. when it is cast to stall. Turn off to count every cast.",
 }
 
 -- What the cost tracker window shows, in the order the checkboxes are shown.

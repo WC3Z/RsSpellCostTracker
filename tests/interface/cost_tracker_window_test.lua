@@ -53,6 +53,48 @@ function tests.refresh_updates_the_open_window()
     cost_tracker_window.destroy()
 end
 
+function tests.more_lines_are_added_to_the_same_window()
+    local created = install_fakes()
+    cost_tracker_window.open({ "a" })
+
+    cost_tracker_window.refresh({ "a", "b" })
+
+    assert_helpers.equal(#created, 1)
+    assert_helpers.same_lines(created[1]:visible_lines(), { "a", "b" })
+    cost_tracker_window.destroy()
+end
+
+function tests.fewer_lines_rebuild_the_window_where_it_was()
+    local created = install_fakes()
+    cost_tracker_window.open({ "a", "b", "c" })
+    created[1].root = { x = 300, y = 200, width = 400, height = 250 }
+
+    cost_tracker_window.refresh({ "a" })
+
+    local rebuilt = created[2]
+    assert_helpers.equal(created[1].destroyed, true)
+    assert_helpers.equal(#rebuilt.texts, 1)
+    assert_helpers.same_lines(rebuilt:visible_lines(), { "a" })
+    assert_helpers.equal(rebuilt.options.x, 300)
+    assert_helpers.equal(rebuilt.options.y, 200)
+    assert_helpers.equal(rebuilt.options.width, 400)
+    assert_helpers.equal(rebuilt.options.height, 250)
+    cost_tracker_window.destroy()
+end
+
+function tests.a_rebuilt_window_can_still_be_closed_and_reopened()
+    local created = install_fakes()
+    cost_tracker_window.open({ "a", "b" })
+    cost_tracker_window.refresh({ "a" })
+
+    created[2]:Close()
+    cost_tracker_window.open({ "c" })
+
+    assert_helpers.equal(#created, 3)
+    assert_helpers.same_lines(created[3]:visible_lines(), { "c" })
+    cost_tracker_window.destroy()
+end
+
 function tests.closing_the_window_lets_it_be_opened_again()
     local created = install_fakes()
     cost_tracker_window.open({ "a" })
