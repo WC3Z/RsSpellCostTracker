@@ -10,53 +10,110 @@ local function format_gp(gp)
     return (grouped:gsub("^,", "")) .. " gp"
 end
 
--- e.g. "Cost: 9,060 gp (estimated: Bone rune)". Runes priced with the fallback
--- price, or with no price at all, are named so the player knows the total is rough.
-local function cost_line(totals)
-    local line = "Cost: " .. format_gp(totals.gp)
-    if totals.estimated_items and #totals.estimated_items > 0 then
-        line = line .. " (estimated: " .. table.concat(totals.estimated_items, ", ") .. ")"
+-- e.g. "9,060 gp (estimated: Bone rune)". Runes priced with the fallback
+-- price, or with no price at all, are named so the player knows the cost is rough.
+local function cost_text(spell)
+    local text = format_gp(spell.gp)
+    if #spell.estimated_items > 0 then
+        text = text .. " (estimated: " .. table.concat(spell.estimated_items, ", ") .. ")"
     end
-    if #totals.unpriced_items > 0 then
-        line = line .. " (no price: " .. table.concat(totals.unpriced_items, ", ") .. ")"
+    if #spell.unpriced_items > 0 then
+        text = text .. " (no price: " .. table.concat(spell.unpriced_items, ", ") .. ")"
     end
-    return line
+    return text
 end
 
--- shown picks which parts to include, e.g. { casts = true, runes = false, cost = true }.
--- Without it, everything is included.
-function totals_text.lines(totals, shown)
-    shown = shown or { casts = true, runes = true, cost = true }
-    local lines = {}
+local function plural(count, word)
+    if count == 1 then
+        return count .. " " .. word
+    end
+    return count .. " " .. word .. "s"
+end
 
+-- Spells that have been cast at least once and that is_shown(spell) allows.
+local function cast_spells(spell_totals, is_shown)
+    local result = {}
+    for _, spell in ipairs(spell_totals) do
+        if spell.casts > 0 and is_shown(spell) then
+            table.insert(result, spell)
+        end
+    end
+    return result
+end
+
+local function total_gp(spells)
+    local gp = 0
+    for _, spell in ipairs(spells) do
+        gp = gp + spell.gp
+    end
+    return gp
+end
+
+local function add_spell_lines(lines, spell, shown)
     if shown.casts then
-        table.insert(lines, "Lord of Bones stalls: " .. totals.casts)
+        table.insert(lines, spell.name .. ": " .. plural(spell.casts, "cast"))
+    else
+        table.insert(lines, spell.name)
     end
 
     if shown.runes then
         local item_names = {}
-        for item_name in pairs(totals.runes_used) do
+        for item_name in pairs(spell.runes_used) do
             table.insert(item_names, item_name)
         end
         table.sort(item_names)
         for _, item_name in ipairs(item_names) do
-            table.insert(lines, item_name .. ": " .. totals.runes_used[item_name])
+            table.insert(lines, "  " .. item_name .. ": " .. spell.runes_used[item_name])
         end
     end
 
-    if shown.cost and totals.gp then
-        table.insert(lines, cost_line(totals))
+    if shown.cost then
+        table.insert(lines, "  Cost: " .. cost_text(spell))
+    end
+end
+
+-- spell_totals: as returned by SpellTracker:totals()
+-- shown picks which parts to include, e.g.
+-- { casts = true, runes = false, cost = true, spells = { Penance = false } }.
+-- A spell missing from shown.spells is shown. Without shown, everything is included.
+-- Spells that haven't been cast are left out.
+function totals_text.lines(spell_totals, shown)
+    shown = shown or { casts = true, runes = true, cost = true }
+    local spells_shown = shown.spells or {}
+    local spells = cast_spells(spell_totals, function(spell)
+        return spells_shown[spell.key] ~= false
+    end)
+
+    if #spells == 0 then
+        return { "No spells cast yet" }
     end
 
+    local lines = {}
+    for _, spell in ipairs(spells) do
+        add_spell_lines(lines, spell, shown)
+    end
+    if shown.cost and #spells > 1 then
+        table.insert(lines, "Total: " .. format_gp(total_gp(spells)))
+    end
     return lines
 end
 
--- Only the total cost, for the plugin's page.
-function totals_text.cost_lines(totals)
-    if not totals.gp then
-        return { "Cost: unknown" }
+-- The cost of each spell cast so far and their total, for the plugin's page.
+function totals_text.cost_lines(spell_totals)
+    local spells = cast_spells(spell_totals, function() return true end)
+
+    if #spells == 0 then
+        return { "No spells cast yet" }
     end
-    return { cost_line(totals) }
+
+    local lines = {}
+    for _, spell in ipairs(spells) do
+        table.insert(lines, spell.name .. ": " .. cost_text(spell))
+    end
+    if #spells > 1 then
+        table.insert(lines, "Total: " .. format_gp(total_gp(spells)))
+    end
+    return lines
 end
 
 return totals_text

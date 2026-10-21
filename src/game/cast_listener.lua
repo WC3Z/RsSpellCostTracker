@@ -1,20 +1,21 @@
 -- Listens for the game telling us an ability was just used.
 local cast_listener = {}
 
-local subscription_name = "stall-tracker-ability-used"
+local subscription_name = "spell-cost-tracker-ability-used"
 
--- Calls on_cast() every time the ability with the given id is used.
+-- Calls on_cast(ability_id) every time one of the given abilities is used.
+-- ability_ids: set of ability ids, e.g. { [49072] = true }
 -- The game reports each ability use by setting the COMBATV2_JUST_USED_ABILITY
 -- variable to the ability's id, and VarTransmit fires for every variable change.
-function cast_listener.start(ability_id, on_cast)
+function cast_listener.start(ability_ids, on_cast)
     Event.VarTransmit.Subscribe(subscription_name, function(event)
         if event.var.configName ~= "COMBATV2_JUST_USED_ABILITY" then
             return
         end
-        if event.newValue ~= ability_id then
+        if not ability_ids[event.newValue] then
             return
         end
-        on_cast()
+        on_cast(event.newValue)
     end)
 end
 

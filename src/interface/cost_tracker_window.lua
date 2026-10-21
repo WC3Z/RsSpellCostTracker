@@ -1,4 +1,4 @@
--- A separate, movable window with the stall totals on the main game screen,
+-- A separate, movable window with the spell totals on the main game screen,
 -- opened from the plugin's page.
 local TextLines = require("src/interface/text_lines")
 
@@ -21,7 +21,7 @@ function cost_tracker_window.open(lines)
     end
 
     window = prettyui.Window.new(game_area(), {
-        title = "Stall costs",
+        title = "Spell costs",
         width = 260,
         height = 160,
         resizable = true,

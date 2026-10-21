@@ -51,10 +51,10 @@ function tests.opening_the_page_shows_the_settings_button_and_cost()
 
     local view = open_page(subscriptions, created)
 
-    assert_helpers.equal(view.title, "Stall Cost Tracker")
+    assert_helpers.equal(view.title, "Spell Cost Tracker")
     assert_helpers.same_lines(view.checkbox_order, {
-        "showCasts", "showRunes", "showCost",
-        "showAnimateDeadCost", "showVampyrismCost", "showPenanceCost", "showDarknessCost",
+        "onlyLordOfBonesStalls", "showCasts", "showRunes", "showCost",
+        "showLordOfBonesCost", "showAnimateDeadCost", "showVampyrismCost", "showPenanceCost", "showDarknessCost",
     })
     assert_helpers.equal(view.checkboxes.showCasts.text, "Show cast count")
     assert_helpers.equal(view.checkboxes.showAnimateDeadCost.text, "Show Animate Dead cost")

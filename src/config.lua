@@ -1,22 +1,25 @@
--- Settings for what counts as a stall and what each cast costs.
+-- The spells whose cost is tracked, what each cast costs, and what counts as
+-- Necromancy gear for Lord of Bones stalls.
 return {
-    -- Value of COMBATV2_JUST_USED_ABILITY when Invoke Lord of Bones is cast.
-    ability_id = 49072,
-
-    -- Runes used by one cast, taken from the RuneScape Wiki page for
-    -- Invoke Lord of Bones. Check in game before trusting the totals.
-    runes_per_cast = {
-        ["Spirit rune"] = 8,
-        ["Bone rune"] = 6,
-        ["Flesh rune"] = 2,
-        ["Miasma rune"] = 1,
-    },
-
     -- The spells whose cost is tracked, in the order they are shown.
     -- key:        used for the spell's show/hide setting
     -- ability_id: value of COMBATV2_JUST_USED_ABILITY when the spell is cast
     -- runes:      runes used by one cast, from the RuneScape Wiki
+    -- can_stall:  the spell is cast to stall; with the "Only track Lord of Bones
+    --             stalls" setting on, casts while wearing Necromancy gear are ignored
     spells = {
+        {
+            key = "LordOfBones",
+            name = "Lord of Bones",
+            ability_id = 49072,
+            can_stall = true,
+            runes = {
+                ["Spirit rune"] = 8,
+                ["Bone rune"] = 6,
+                ["Flesh rune"] = 2,
+                ["Miasma rune"] = 1,
+            },
+        },
         {
             key = "AnimateDead",
             name = "Animate Dead",

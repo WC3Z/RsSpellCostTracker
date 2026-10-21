@@ -1,11 +1,11 @@
--- The plugin's page: choices for what the cost tracker window shows, a button
--- that opens it, and the total cost so far.
+-- The plugin's page: the player's settings, a button that opens the cost
+-- tracker window, and the cost of each spell so far.
 local TextLines = require("src/interface/text_lines")
-local display_settings = require("src/interface/display_settings")
+local player_settings = require("src/interface/player_settings")
 
 local content_view = {}
 
-local subscription_name = "stall-cost-tracker-content"
+local subscription_name = "spell-cost-tracker-content"
 local get_cost_lines
 local on_settings_changed
 local on_open_window
@@ -16,10 +16,10 @@ local text
 -- to that one setting. prettyui passes the new checked state as the 4th argument.
 local function add_checkbox(option)
     view:AddCheckboxButton({
-        { text = option.label, value = option.db_key, selected = display_settings.is_on(option) },
+        { text = option.label, value = option.db_key, selected = player_settings.is_on(option) },
     }, {
         onChange = function(_, _, _, selected)
-            display_settings.set(option, selected)
+            player_settings.set(option, selected)
             on_settings_changed()
         end,
     })
@@ -42,11 +42,12 @@ function content_view.start(callbacks)
             height = parent.height,
         })
 
-        view:AddTitle("Stall Cost Tracker")
-        for _, option in ipairs(display_settings.options) do
+        view:AddTitle("Spell Cost Tracker")
+        add_checkbox(player_settings.only_stalls_option)
+        for _, option in ipairs(player_settings.options) do
             add_checkbox(option)
         end
-        for _, option in ipairs(display_settings.spell_options) do
+        for _, option in ipairs(player_settings.spell_options) do
             add_checkbox(option)
         end
         -- Wrapped so prettyui's button arguments (self, active) aren't passed on.

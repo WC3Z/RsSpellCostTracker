@@ -22,7 +22,7 @@ function prices.average_price(item_id)
     return (latest.high + latest.low) / 2
 end
 
--- Returns a function(item_name) -> price for the stall tracker, looking up
+-- Returns a function(item_name) -> price for the spell tracker, looking up
 -- each item's id in item_ids.
 function prices.by_item_name(item_ids)
     return function(item_name)
