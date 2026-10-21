@@ -2,10 +2,18 @@ local display_settings = require("src/interface/display_settings")
 local fake_persistent_db = require("tests/helpers/fake_persistent_db")
 local assert_helpers = require("tests/helpers/assert")
 
-local function option(name)
-    for _, candidate in ipairs(display_settings.options) do
+local function find(options, name)
+    for _, candidate in ipairs(options) do
         if candidate.name == name then return candidate end
     end
+end
+
+local function option(name)
+    return find(display_settings.options, name)
+end
+
+local function spell_option(key)
+    return find(display_settings.spell_options, key)
 end
 
 local tests = {}
@@ -18,6 +26,10 @@ function tests.everything_is_shown_when_nothing_is_saved()
     assert_helpers.equal(shown.casts, true)
     assert_helpers.equal(shown.runes, true)
     assert_helpers.equal(shown.cost, true)
+    assert_helpers.equal(shown.spells.AnimateDead, true)
+    assert_helpers.equal(shown.spells.Vampyrism, true)
+    assert_helpers.equal(shown.spells.Penance, true)
+    assert_helpers.equal(shown.spells.Darkness, true)
 end
 
 function tests.a_setting_turned_off_is_saved_and_hidden()
@@ -28,6 +40,24 @@ function tests.a_setting_turned_off_is_saved_and_hidden()
     assert_helpers.equal(stored.showRunes, false)
     assert_helpers.equal(display_settings.current().runes, false)
     assert_helpers.equal(display_settings.current().casts, true)
+end
+
+function tests.there_is_a_setting_for_each_spell()
+    local option = spell_option("AnimateDead")
+
+    assert_helpers.equal(#display_settings.spell_options, 4)
+    assert_helpers.equal(option.db_key, "showAnimateDeadCost")
+    assert_helpers.equal(option.label, "Show Animate Dead cost")
+end
+
+function tests.a_spell_turned_off_is_saved_and_hidden()
+    local stored = fake_persistent_db.install()
+
+    display_settings.set(spell_option("Penance"), false)
+
+    assert_helpers.equal(stored.showPenanceCost, false)
+    assert_helpers.equal(display_settings.current().spells.Penance, false)
+    assert_helpers.equal(display_settings.current().spells.Darkness, true)
 end
 
 return tests

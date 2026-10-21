@@ -46,6 +46,9 @@ function content_view.start(callbacks)
         for _, option in ipairs(display_settings.options) do
             add_checkbox(option)
         end
+        for _, option in ipairs(display_settings.spell_options) do
+            add_checkbox(option)
+        end
         -- Wrapped so prettyui's button arguments (self, active) aren't passed on.
         view:AddSimpleButton("Open cost tracker", function()
             on_open_window()

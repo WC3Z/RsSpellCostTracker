@@ -12,6 +12,57 @@ return {
         ["Miasma rune"] = 1,
     },
 
+    -- The spells whose cost is tracked, in the order they are shown.
+    -- key:        used for the spell's show/hide setting
+    -- ability_id: value of COMBATV2_JUST_USED_ABILITY when the spell is cast
+    -- runes:      runes used by one cast, from the RuneScape Wiki
+    spells = {
+        {
+            key = "AnimateDead",
+            name = "Animate Dead",
+            ability_id = nil, -- TODO: find in game
+            runes = {
+                ["Earth rune"] = 30,
+                ["Death rune"] = 15,
+                ["Blood rune"] = 15,
+                ["Soul rune"] = 6,
+            },
+        },
+        {
+            key = "Vampyrism",
+            name = "Vampyrism",
+            ability_id = nil, -- TODO: find in game
+            runes = {
+                ["Fire rune"] = 40,
+                ["Death rune"] = 10,
+                ["Blood rune"] = 15,
+                ["Soul rune"] = 6,
+            },
+        },
+        {
+            key = "Penance",
+            name = "Penance",
+            ability_id = nil, -- TODO: find in game
+            runes = {
+                ["Body rune"] = 30,
+                ["Chaos rune"] = 20,
+                ["Law rune"] = 3,
+                ["Soul rune"] = 10,
+            },
+        },
+        {
+            key = "Darkness",
+            name = "Darkness",
+            ability_id = 48331,
+            runes = {
+                ["Spirit rune"] = 40,
+                ["Bone rune"] = 20,
+                ["Flesh rune"] = 10,
+                ["Miasma rune"] = 5,
+            },
+        },
+    },
+
     -- Item ids of the runes above, read from the backpack in game
     -- (item.obj.id). Used to look up Grand Exchange prices.
     item_ids = {
@@ -19,6 +70,14 @@ return {
         ["Bone rune"] = 55338,
         ["Flesh rune"] = 55339,
         ["Miasma rune"] = 55340,
+        ["Earth rune"] = 557,
+        ["Fire rune"] = 554,
+        ["Body rune"] = 559,
+        ["Chaos rune"] = 562,
+        ["Law rune"] = 563,
+        ["Death rune"] = 560,
+        ["Blood rune"] = 565,
+        ["Soul rune"] = 566,
     },
 
     -- Prices in gp used when the Grand Exchange price of a rune can't be

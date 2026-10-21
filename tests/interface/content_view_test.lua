@@ -52,8 +52,12 @@ function tests.opening_the_page_shows_the_settings_button_and_cost()
     local view = open_page(subscriptions, created)
 
     assert_helpers.equal(view.title, "Stall Cost Tracker")
-    assert_helpers.same_lines(view.checkbox_order, { "showCasts", "showRunes", "showCost" })
+    assert_helpers.same_lines(view.checkbox_order, {
+        "showCasts", "showRunes", "showCost",
+        "showAnimateDeadCost", "showVampyrismCost", "showPenanceCost", "showDarknessCost",
+    })
     assert_helpers.equal(view.checkboxes.showCasts.text, "Show cast count")
+    assert_helpers.equal(view.checkboxes.showAnimateDeadCost.text, "Show Animate Dead cost")
     assert_helpers.equal(view.buttons["Open cost tracker"] ~= nil, true)
     assert_helpers.same_lines(view:visible_lines(), { "Cost: 4,530 gp" })
     content_view.stop()
