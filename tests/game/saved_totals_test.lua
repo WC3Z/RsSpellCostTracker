@@ -12,7 +12,6 @@ local penance = { key = "Penance", name = "Penance", ability_id = 1, runes = { [
 local function darkness_totals(overrides)
     local totals = {
         key = "Darkness", name = "Darkness", casts = 2,
-        runes_used = { ["Bone rune"] = 40, ["Flesh rune"] = 20 },
         gp = 1234.5,
         unpriced_items = { "Flesh rune" },
         estimated_items = { "Bone rune" },
@@ -32,7 +31,7 @@ function tests.saves_each_value_under_its_own_key()
 
     assert_helpers.equal(stored["Darkness.casts"], 2)
     assert_helpers.equal(stored["Darkness.gp"], 1234.5)
-    assert_helpers.equal(stored["Darkness.rune.Bone rune"], 40)
+    assert_helpers.equal(stored["Darkness.rune.Bone rune"], nil)
     assert_helpers.equal(stored["Darkness.estimated.Bone rune"], true)
     assert_helpers.equal(stored["Darkness.unpriced.Bone rune"], false)
     assert_helpers.equal(stored["Darkness.unpriced.Flesh rune"], true)
@@ -47,8 +46,6 @@ function tests.loads_what_was_saved()
     assert_helpers.equal(loaded.key, "Darkness")
     assert_helpers.equal(loaded.casts, 2)
     assert_helpers.equal(loaded.gp, 1234.5)
-    assert_helpers.equal(loaded.runes_used["Bone rune"], 40)
-    assert_helpers.equal(loaded.runes_used["Flesh rune"], 20)
     assert_helpers.same_lines(loaded.estimated_items, { "Bone rune" })
     assert_helpers.same_lines(loaded.unpriced_items, { "Flesh rune" })
 end
@@ -62,15 +59,13 @@ function tests.a_rune_no_longer_estimated_is_cleared()
     assert_helpers.equal(#saved_totals.load({ darkness })[1].estimated_items, 0)
 end
 
-function tests.counts_saved_as_floats_load_as_integers()
+function tests.cast_count_saved_as_float_loads_as_integer()
     local stored = fake_persistent_db.install()
     stored["Darkness.casts"] = 2.0
-    stored["Darkness.rune.Bone rune"] = 40.0
 
     local loaded = saved_totals.load({ darkness })[1]
 
     assert_helpers.equal(tostring(loaded.casts), "2")
-    assert_helpers.equal(tostring(loaded.runes_used["Bone rune"]), "40")
 end
 
 function tests.spells_never_saved_load_as_zero()
@@ -80,7 +75,6 @@ function tests.spells_never_saved_load_as_zero()
 
     assert_helpers.equal(loaded.casts, 0)
     assert_helpers.equal(loaded.gp, 0)
-    assert_helpers.equal(next(loaded.runes_used), nil)
     assert_helpers.equal(#loaded.estimated_items, 0)
     assert_helpers.equal(#loaded.unpriced_items, 0)
 end

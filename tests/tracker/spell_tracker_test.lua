@@ -222,7 +222,7 @@ function tests.restore_continues_from_saved_totals()
 
     tracker:restore({
         {
-            key = "Darkness", casts = 3, runes_used = { ["Bone rune"] = 60 }, gp = 6000,
+            key = "Darkness", casts = 3, gp = 6000,
             unpriced_items = {}, estimated_items = { "Bone rune" },
         },
     })
@@ -239,7 +239,7 @@ function tests.restore_skips_spells_that_are_not_tracked()
     local tracker = new_tracker()
 
     tracker:restore({
-        { key = "Gone", casts = 1, runes_used = {}, gp = 0, unpriced_items = {}, estimated_items = {} },
+        { key = "Gone", casts = 1, gp = 0, unpriced_items = {}, estimated_items = {} },
     })
 
     assert_helpers.equal(totals_for(tracker, "Gone"), nil)

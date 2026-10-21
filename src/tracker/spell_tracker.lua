@@ -1,17 +1,10 @@
 -- Counts the casts of each tracked spell and keeps its running totals: number
--- of casts, runes used and their Grand Exchange cost.
+-- of casts and their Grand Exchange cost. The runes used follow from the
+-- number of casts, so they aren't kept separately.
 local necro_gear = require("src/tracker/necro_gear")
 
 local SpellTracker = {}
 SpellTracker.__index = SpellTracker
-
-local function copy(source)
-    local result = {}
-    for key, value in pairs(source) do
-        result[key] = value
-    end
-    return result
-end
 
 local function as_set(list)
     local set = {}
@@ -53,7 +46,6 @@ function SpellTracker:reset()
     for _, spell in ipairs(self.spells) do
         self.totals_by_key[spell.key] = {
             casts = 0,
-            runes_used = {},
             gp = 0,
             unpriced_items = {},
             estimated_items = {},
@@ -62,14 +54,13 @@ function SpellTracker:reset()
 end
 
 -- Continues from earlier totals, e.g. ones saved before the plugin was restarted.
--- saved: list of { key, casts, runes_used, gp, unpriced_items, estimated_items },
--- as returned by totals(). Spells that aren't tracked any more are skipped.
+-- saved: list of { key, casts, gp, unpriced_items, estimated_items }, e.g. as
+-- returned by totals(). Spells that aren't tracked any more are skipped.
 function SpellTracker:restore(saved)
     for _, spell in ipairs(saved) do
         local totals = self.totals_by_key[spell.key]
         if totals then
             totals.casts = spell.casts
-            totals.runes_used = copy(spell.runes_used)
             totals.gp = spell.gp
             totals.unpriced_items = as_set(spell.unpriced_items)
             totals.estimated_items = as_set(spell.estimated_items)
@@ -110,10 +101,20 @@ function SpellTracker:on_cast(spell, worn_equipment)
     local totals = self.totals_by_key[spell.key]
     totals.casts = totals.casts + 1
     for item_name, quantity in pairs(spell.runes) do
-        totals.runes_used[item_name] = (totals.runes_used[item_name] or 0) + quantity
         self:add_cost(totals, item_name, quantity)
     end
     return spell
+end
+
+-- { [rune name] = quantity } used by the given number of casts of the spell.
+local function runes_used(spell, casts)
+    local used = {}
+    if casts > 0 then
+        for item_name, quantity in pairs(spell.runes) do
+            used[item_name] = quantity * casts
+        end
+    end
+    return used
 end
 
 -- The totals of one spell, in the same shape as an entry of totals().
@@ -123,7 +124,7 @@ function SpellTracker:spell_totals(spell)
         key = spell.key,
         name = spell.name,
         casts = totals.casts,
-        runes_used = copy(totals.runes_used),
+        runes_used = runes_used(spell, totals.casts),
         gp = totals.gp,
         unpriced_items = sorted_keys(totals.unpriced_items),
         estimated_items = sorted_keys(totals.estimated_items),

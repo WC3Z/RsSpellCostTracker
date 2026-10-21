@@ -2,9 +2,10 @@
 -- or the game is restarted.
 --
 -- Every value gets its own key, e.g. "LordOfBones.casts", "LordOfBones.gp",
--- "LordOfBones.rune.Bone rune", "LordOfBones.estimated.Bone rune" and
--- "LordOfBones.unpriced.Bone rune". The runes come from each spell's runes in
--- config.lua, so a spell's keys are known without listing what was saved.
+-- "LordOfBones.estimated.Bone rune" and "LordOfBones.unpriced.Bone rune". The
+-- runes come from each spell's runes in config.lua, so a spell's keys are known
+-- without listing what was saved. The runes used aren't saved, because the
+-- tracker works them out from the number of casts.
 local saved_totals = {}
 
 local function key(spell_key, ...)
@@ -12,7 +13,7 @@ local function key(spell_key, ...)
 end
 
 -- PersistentDB gives numbers back as floats, which Lua prints as e.g. "2.0".
--- Counts are always whole, so they are turned back into integers.
+-- The cast count is always whole, so it is turned back into an integer.
 local function load_count(db_key)
     local value = PersistentDB:Get(db_key) or 0
     return math.floor(value + 0.5)
@@ -35,7 +36,6 @@ function saved_totals.save(spell, totals)
     PersistentDB:Set(key(spell.key, "casts"), totals.casts)
     PersistentDB:Set(key(spell.key, "gp"), totals.gp)
     for item_name in pairs(spell.runes) do
-        PersistentDB:Set(key(spell.key, "rune", item_name), totals.runes_used[item_name] or 0)
         PersistentDB:SetBool(key(spell.key, "estimated", item_name), estimated[item_name] == true)
         PersistentDB:SetBool(key(spell.key, "unpriced", item_name), unpriced[item_name] == true)
     end
@@ -50,15 +50,10 @@ function saved_totals.load(spells)
             key = spell.key,
             casts = load_count(key(spell.key, "casts")),
             gp = PersistentDB:Get(key(spell.key, "gp")) or 0,
-            runes_used = {},
             estimated_items = {},
             unpriced_items = {},
         }
         for item_name in pairs(spell.runes) do
-            local used = load_count(key(spell.key, "rune", item_name))
-            if used > 0 then
-                totals.runes_used[item_name] = used
-            end
             if PersistentDB:GetBool(key(spell.key, "estimated", item_name)) then
                 table.insert(totals.estimated_items, item_name)
             end
