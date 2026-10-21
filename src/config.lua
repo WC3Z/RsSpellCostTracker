@@ -7,7 +7,7 @@ return {
     -- timer:      for spells that aren't abilities, where their timer is kept:
     --             the variable it is packed into, and its bits in that variable.
     --             A cast is counted whenever the timer goes up.
-    -- runes:      runes used by one cast, from the RuneScape Wiki
+    -- runes:      runes used by one cast
     -- can_stall:  the spell is cast to stall; with the "Only track Lord of Bones
     --             stalls" setting on, casts while wearing Necromancy gear are ignored
     spells = {
@@ -69,8 +69,7 @@ return {
         },
     },
 
-    -- Item ids of the runes above, read from the backpack in game
-    -- (item.obj.id). Used to look up Grand Exchange prices.
+    -- Item ids of the runes
     item_ids = {
         ["Spirit rune"] = 55337,
         ["Bone rune"] = 55338,
@@ -93,11 +92,17 @@ return {
         ["Bone rune"] = 350,
         ["Flesh rune"] = 640,
         ["Miasma rune"] = 590,
+        ["Earth rune"] = 15,
+        ["Fire rune"] = 40,
+        ["Body rune"] = 15,
+        ["Chaos rune"] = 160,
+        ["Law rune"] = 400,
+        ["Death rune"] = 100,
+        ["Blood rune"] = 290,
+        ["Soul rune"] = 1000,
     },
 
-    -- Item ids of Necromancy gear, as reported by the worn inventory
-    -- (item.obj.id). Augmented and unaugmented versions have different ids,
-    -- so each one has to be listed. The comments are the items' config names.
+    -- Item ids of Necromancy gear
     necro_item_ids = {
         -- Underworld, T90
         [55424] = true, -- NECRO_UNDERWORLD_HEAD_T90
