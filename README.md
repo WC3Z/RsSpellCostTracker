@@ -2,6 +2,9 @@
 
 A RuneScape 3 plugin that keeps track of how much your spells cost in runes, priced from the Grand Exchange.
 
+## Usage
+Build the plugin. You'll also need the GEPL dev plugin until it has been approved and uploaded to the plugin hub. Install PrettyUI. Add gepl and Spell-Cost-Tracker folders to the dev_plugins folder located in  the RuneScape-BETA folder. 
+
 ## Tracked spells
 
 | Spell | Runes per cast |
@@ -12,7 +15,7 @@ A RuneScape 3 plugin that keeps track of how much your spells cost in runes, pri
 | Penance | 30 Body, 20 Chaos, 3 Law, 10 Soul |
 | Darkness | 40 Spirit, 20 Bone, 10 Flesh, 5 Miasma |
 
-Rune costs are from the RuneScape Wiki and live in `src/config.lua`.
+Rune costs live in `src/config.lua`.
 
 ## Features
 
