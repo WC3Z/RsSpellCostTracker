@@ -13,6 +13,14 @@ local function copy(source)
     return result
 end
 
+local function as_set(list)
+    local set = {}
+    for _, item in ipairs(list) do
+        set[item] = true
+    end
+    return set
+end
+
 local function sorted_keys(source)
     local keys = {}
     for key in pairs(source) do
@@ -50,6 +58,22 @@ function SpellTracker:reset()
             unpriced_items = {},
             estimated_items = {},
         }
+    end
+end
+
+-- Continues from earlier totals, e.g. ones saved before the plugin was restarted.
+-- saved: list of { key, casts, runes_used, gp, unpriced_items, estimated_items },
+-- as returned by totals(). Spells that aren't tracked any more are skipped.
+function SpellTracker:restore(saved)
+    for _, spell in ipairs(saved) do
+        local totals = self.totals_by_key[spell.key]
+        if totals then
+            totals.casts = spell.casts
+            totals.runes_used = copy(spell.runes_used)
+            totals.gp = spell.gp
+            totals.unpriced_items = as_set(spell.unpriced_items)
+            totals.estimated_items = as_set(spell.estimated_items)
+        end
     end
 end
 
@@ -95,14 +119,14 @@ end
 -- is part of normal Necromancy combat; cast without it, the player is only
 -- using it to stall. With only_stalls on, just the stalls are counted.
 -- worn_equipment: { [slot] = item id }
--- Returns true when the cast was counted.
+-- Returns the counted spell, or nil when the cast wasn't counted.
 function SpellTracker:on_cast(ability_id, worn_equipment)
     local spell = find_spell(self.spells, ability_id)
     if spell == nil then
-        return false
+        return nil
     end
     if spell.can_stall and self.only_stalls() and necro_gear.is_wearing(worn_equipment, self.necro_gear) then
-        return false
+        return nil
     end
 
     local totals = self.totals_by_key[spell.key]
@@ -111,7 +135,21 @@ function SpellTracker:on_cast(ability_id, worn_equipment)
         totals.runes_used[item_name] = (totals.runes_used[item_name] or 0) + quantity
         self:add_cost(totals, item_name, quantity)
     end
-    return true
+    return spell
+end
+
+-- The totals of one spell, in the same shape as an entry of totals().
+function SpellTracker:spell_totals(spell)
+    local totals = self.totals_by_key[spell.key]
+    return {
+        key = spell.key,
+        name = spell.name,
+        casts = totals.casts,
+        runes_used = copy(totals.runes_used),
+        gp = totals.gp,
+        unpriced_items = sorted_keys(totals.unpriced_items),
+        estimated_items = sorted_keys(totals.estimated_items),
+    }
 end
 
 -- One entry per spell, in the order of the spells option:
@@ -122,16 +160,7 @@ end
 function SpellTracker:totals()
     local result = {}
     for _, spell in ipairs(self.spells) do
-        local totals = self.totals_by_key[spell.key]
-        table.insert(result, {
-            key = spell.key,
-            name = spell.name,
-            casts = totals.casts,
-            runes_used = copy(totals.runes_used),
-            gp = totals.gp,
-            unpriced_items = sorted_keys(totals.unpriced_items),
-            estimated_items = sorted_keys(totals.estimated_items),
-        })
+        table.insert(result, self:spell_totals(spell))
     end
     return result
 end

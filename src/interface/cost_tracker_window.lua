@@ -28,8 +28,6 @@ function cost_tracker_window.open(lines)
         -- prettyui's default minimum is 220 x 140, which is bigger than a single cost line needs.
         minWidth = 120,
         minHeight = 60,
-        -- The content is a handful of lines, so it is resized rather than scrolled.
-        scrollable = false,
         destroyOnClose = true,
         onClose = function()
             window = nil

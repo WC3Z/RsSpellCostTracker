@@ -12,6 +12,8 @@ function cast_listener.start(ability_ids, on_cast)
         if event.var.configName ~= "COMBATV2_JUST_USED_ABILITY" then
             return
         end
+        -- TEMPORARY: prints every ability used, to find the ids of spells still missing one.
+        print("Ability used: " .. tostring(event.newValue))
         if not ability_ids[event.newValue] then
             return
         end

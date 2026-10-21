@@ -3,6 +3,7 @@ local SpellTracker = require("src/tracker/spell_tracker")
 local prices = require("src/game/prices")
 local equipment = require("src/game/equipment")
 local cast_listener = require("src/game/cast_listener")
+local saved_totals = require("src/game/saved_totals")
 local totals_text = require("src/tracker/totals_text")
 local player_settings = require("src/interface/player_settings")
 local content_view = require("src/interface/content_view")
@@ -15,6 +16,7 @@ local tracker = SpellTracker.new({
     fallback_prices = settings.fallback_prices,
     only_stalls = player_settings.only_stalls,
 })
+tracker:restore(saved_totals.load(settings.spells))
 
 -- The cost tracker window shows what the player picked on the plugin's page.
 local function window_lines()
@@ -37,7 +39,9 @@ local function open_cost_tracker()
 end
 
 local function on_cast(ability_id)
-    if tracker:on_cast(ability_id, equipment.worn_item_ids()) then
+    local spell = tracker:on_cast(ability_id, equipment.worn_item_ids())
+    if spell then
+        saved_totals.save(spell, tracker:spell_totals(spell))
         refresh_views()
     end
 end

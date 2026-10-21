@@ -49,7 +49,7 @@ local tests = {}
 function tests.counts_casts_per_spell()
     local tracker = new_tracker()
 
-    assert_helpers.equal(tracker:on_cast(49072, no_gear), true)
+    assert_helpers.equal(tracker:on_cast(49072, no_gear), stall_spell)
     tracker:on_cast(48331, no_gear)
     tracker:on_cast(48331, no_gear)
 
@@ -75,7 +75,7 @@ end
 function tests.ignores_unknown_abilities()
     local tracker = new_tracker()
 
-    assert_helpers.equal(tracker:on_cast(12345, no_gear), false)
+    assert_helpers.equal(tracker:on_cast(12345, no_gear), nil)
 end
 
 function tests.ability_ids_leave_out_spells_without_one()
@@ -91,21 +91,21 @@ end
 function tests.counts_stall_spell_in_necro_gear_when_only_stalls_is_off()
     local tracker = new_tracker()
 
-    assert_helpers.equal(tracker:on_cast(49072, necro_helmet), true)
+    assert_helpers.equal(tracker:on_cast(49072, necro_helmet), stall_spell)
 end
 
 function tests.ignores_stall_spell_in_necro_gear_when_only_stalls_is_on()
     local tracker = new_tracker({ only_stalls = only_stalls })
 
-    assert_helpers.equal(tracker:on_cast(49072, necro_helmet), false)
-    assert_helpers.equal(tracker:on_cast(49072, no_gear), true)
+    assert_helpers.equal(tracker:on_cast(49072, necro_helmet), nil)
+    assert_helpers.equal(tracker:on_cast(49072, no_gear), stall_spell)
     assert_helpers.equal(totals_for(tracker, "LordOfBones").casts, 1)
 end
 
 function tests.only_stalls_does_not_affect_other_spells()
     local tracker = new_tracker({ only_stalls = only_stalls })
 
-    assert_helpers.equal(tracker:on_cast(48331, necro_helmet), true)
+    assert_helpers.equal(tracker:on_cast(48331, necro_helmet), other_spell)
 end
 
 function tests.ignored_casts_are_not_priced()
@@ -231,6 +231,45 @@ function tests.totals_cannot_modify_tracker_state()
     totals_for(tracker, "LordOfBones").runes_used["Bone rune"] = 0
 
     assert_helpers.equal(totals_for(tracker, "LordOfBones").runes_used["Bone rune"], 8)
+end
+
+function tests.restore_continues_from_saved_totals()
+    local tracker = new_tracker({ get_price = price_list({ ["Bone rune"] = 100 }) })
+
+    tracker:restore({
+        {
+            key = "Darkness", casts = 3, runes_used = { ["Bone rune"] = 60 }, gp = 6000,
+            unpriced_items = {}, estimated_items = { "Bone rune" },
+        },
+    })
+    tracker:on_cast(48331, no_gear)
+
+    local totals = totals_for(tracker, "Darkness")
+    assert_helpers.equal(totals.casts, 4)
+    assert_helpers.equal(totals.runes_used["Bone rune"], 80)
+    assert_helpers.equal(totals.gp, 6000 + 20 * 100)
+    assert_helpers.equal(totals.estimated_items[1], "Bone rune")
+end
+
+function tests.restore_skips_spells_that_are_not_tracked()
+    local tracker = new_tracker()
+
+    tracker:restore({
+        { key = "Gone", casts = 1, runes_used = {}, gp = 0, unpriced_items = {}, estimated_items = {} },
+    })
+
+    assert_helpers.equal(totals_for(tracker, "Gone"), nil)
+end
+
+function tests.spell_totals_match_the_entry_in_totals()
+    local tracker = new_tracker()
+    tracker:on_cast(48331, no_gear)
+
+    local totals = tracker:spell_totals(other_spell)
+
+    assert_helpers.equal(totals.key, "Darkness")
+    assert_helpers.equal(totals.casts, 1)
+    assert_helpers.equal(totals.runes_used["Bone rune"], 20)
 end
 
 return tests

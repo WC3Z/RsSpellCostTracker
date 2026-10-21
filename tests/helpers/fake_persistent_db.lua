@@ -11,6 +11,12 @@ function fake_persistent_db.install()
         SetBool = function(_, key, value)
             stored[key] = value
         end,
+        Get = function(_, key)
+            return stored[key]
+        end,
+        Set = function(_, key, value)
+            stored[key] = value
+        end,
     }
     return stored
 end
