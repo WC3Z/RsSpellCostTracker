@@ -74,11 +74,12 @@ end
 
 -- spell_totals: as returned by SpellTracker:totals()
 -- shown picks which parts to include, e.g.
--- { casts = true, runes = false, cost = true, spells = { Penance = false } }.
+-- { casts = true, runes = false, cost = true, total = true, spells = { Penance = false } }.
+-- cost is each spell's cost, total the cost of all shown spells together.
 -- A spell missing from shown.spells is shown. Without shown, everything is included.
 -- Spells that haven't been cast are left out.
 function totals_text.lines(spell_totals, shown)
-    shown = shown or { casts = true, runes = true, cost = true }
+    shown = shown or { casts = true, runes = true, cost = true, total = true }
     local spells_shown = shown.spells or {}
     local spells = cast_spells(spell_totals, function(spell)
         return spells_shown[spell.key] ~= false
@@ -92,7 +93,7 @@ function totals_text.lines(spell_totals, shown)
     for _, spell in ipairs(spells) do
         add_spell_lines(lines, spell, shown)
     end
-    if shown.cost and #spells > 1 then
+    if shown.total then
         table.insert(lines, "Total: " .. format_gp(total_gp(spells)))
     end
     return lines
@@ -110,9 +111,7 @@ function totals_text.cost_lines(spell_totals)
     for _, spell in ipairs(spells) do
         table.insert(lines, spell.name .. ": " .. cost_text(spell))
     end
-    if #spells > 1 then
-        table.insert(lines, "Total: " .. format_gp(total_gp(spells)))
-    end
+    table.insert(lines, "Total: " .. format_gp(total_gp(spells)))
     return lines
 end
 

@@ -53,7 +53,7 @@ function tests.opening_the_page_shows_the_settings_button_and_cost()
 
     assert_helpers.equal(view.title, "Spell Cost Tracker")
     assert_helpers.same_lines(view.checkbox_order, {
-        "onlyLordOfBonesStalls", "showCasts", "showRunes", "showCost",
+        "onlyLordOfBonesStalls", "showCasts", "showRunes", "showCost", "showTotalCost",
         "showLordOfBonesCost", "showAnimateDeadCost", "showVampyrismCost", "showPenanceCost", "showDarknessCost",
     })
     assert_helpers.equal(view.checkboxes.showCasts.text, "Show cast count")

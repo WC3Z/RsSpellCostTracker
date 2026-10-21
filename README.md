@@ -22,7 +22,7 @@ Rune costs are from the RuneScape Wiki and live in `src/config.lua`.
 - A movable window with the totals, opened from the plugin's page.
 - Settings on the plugin's page:
   - **Only track Lord of Bones stalls**: only counts Lord of Bones casts made without Necromancy gear on.
-  - What the window shows: cast count, rune count and cost.
+  - What the window shows: cast count, rune count, cost per spell and total cost.
   - Which spells the window shows.
 
 ## Dependencies

@@ -23,6 +23,7 @@ player_settings.options = {
     { name = "casts", db_key = "showCasts", label = "Show cast count" },
     { name = "runes", db_key = "showRunes", label = "Show rune count" },
     { name = "cost", db_key = "showCost", label = "Show cost" },
+    { name = "total", db_key = "showTotalCost", label = "Show total cost" },
 }
 
 -- One option per tracked spell, in the order of settings.spells, e.g.
@@ -50,7 +51,7 @@ function player_settings.only_stalls()
 end
 
 -- Which parts the player wants to see in the cost tracker window, e.g.
--- { casts = true, runes = false, cost = true, spells = { Darkness = true, Penance = false } }.
+-- { casts = true, runes = false, cost = true, total = true, spells = { Darkness = true, Penance = false } }.
 function player_settings.shown()
     local shown = { spells = {} }
     for _, option in ipairs(player_settings.options) do

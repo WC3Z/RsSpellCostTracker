@@ -32,6 +32,7 @@ function tests.lists_each_cast_spell_with_runes_alphabetically_and_cost()
         "  Bone rune: 12",
         "  Spirit rune: 16",
         "  Cost: 9,060 gp",
+        "Total: 9,060 gp",
     })
 end
 
@@ -53,8 +54,8 @@ function tests.says_so_when_nothing_has_been_cast()
     assert_helpers.same_lines(lines, { "No spells cast yet" })
 end
 
-function tests.adds_a_total_when_several_spells_are_shown()
-    local lines = totals_text.lines({ lord_of_bones, darkness }, { casts = true, cost = true })
+function tests.total_adds_up_the_shown_spells()
+    local lines = totals_text.lines({ lord_of_bones, darkness }, { casts = true, cost = true, total = true })
 
     assert_helpers.same_lines(lines, {
         "Lord of Bones: 2 casts",
@@ -67,10 +68,27 @@ end
 
 function tests.leaves_out_hidden_spells_and_their_cost()
     local lines = totals_text.lines({ lord_of_bones, darkness }, {
-        casts = true, cost = true, spells = { LordOfBones = false },
+        casts = true, cost = true, total = true, spells = { LordOfBones = false },
     })
 
-    assert_helpers.same_lines(lines, { "Darkness: 1 cast", "  Cost: 6,400 gp" })
+    assert_helpers.same_lines(lines, { "Darkness: 1 cast", "  Cost: 6,400 gp", "Total: 6,400 gp" })
+end
+
+function tests.shows_the_total_without_each_spells_cost()
+    local lines = totals_text.lines({ lord_of_bones, darkness }, { casts = true, cost = false, total = true })
+
+    assert_helpers.same_lines(lines, { "Lord of Bones: 2 casts", "Darkness: 1 cast", "Total: 15,460 gp" })
+end
+
+function tests.can_hide_the_total()
+    local lines = totals_text.lines({ lord_of_bones, darkness }, { casts = true, cost = true, total = false })
+
+    assert_helpers.same_lines(lines, {
+        "Lord of Bones: 2 casts",
+        "  Cost: 9,060 gp",
+        "Darkness: 1 cast",
+        "  Cost: 6,400 gp",
+    })
 end
 
 function tests.shows_only_the_name_without_the_cast_count()
@@ -88,13 +106,13 @@ end
 function tests.formats_cost_with_thousand_separators()
     local lines = totals_text.cost_lines({ spell("Darkness", "Darkness", { gp = 1234567 }) })
 
-    assert_helpers.same_lines(lines, { "Darkness: 1,234,567 gp" })
+    assert_helpers.same_lines(lines, { "Darkness: 1,234,567 gp", "Total: 1,234,567 gp" })
 end
 
 function tests.formats_small_cost_without_leading_separator()
     local lines = totals_text.cost_lines({ spell("Darkness", "Darkness", { gp = 414 }) })
 
-    assert_helpers.same_lines(lines, { "Darkness: 414 gp" })
+    assert_helpers.equal(lines[1], "Darkness: 414 gp")
 end
 
 function tests.notes_items_without_a_price()
@@ -102,7 +120,7 @@ function tests.notes_items_without_a_price()
         spell("Darkness", "Darkness", { gp = 0, unpriced_items = { "Bone rune", "Spirit rune" } }),
     })
 
-    assert_helpers.same_lines(lines, { "Darkness: 0 gp (no price: Bone rune, Spirit rune)" })
+    assert_helpers.equal(lines[1], "Darkness: 0 gp (no price: Bone rune, Spirit rune)")
 end
 
 function tests.notes_items_priced_with_fallback_price()
@@ -110,7 +128,7 @@ function tests.notes_items_priced_with_fallback_price()
         spell("Darkness", "Darkness", { gp = 4530, estimated_items = { "Bone rune", "Flesh rune" } }),
     })
 
-    assert_helpers.same_lines(lines, { "Darkness: 4,530 gp (estimated: Bone rune, Flesh rune)" })
+    assert_helpers.equal(lines[1], "Darkness: 4,530 gp (estimated: Bone rune, Flesh rune)")
 end
 
 function tests.cost_lines_show_every_cast_spell_and_the_total()
