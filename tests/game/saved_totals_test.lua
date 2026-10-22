@@ -13,6 +13,7 @@ local function darkness_totals(overrides)
     local totals = {
         key = "Darkness", name = "Darkness", casts = 2,
         gp = 1234.5,
+        estimated_gp = 700,
         unpriced_items = { "Flesh rune" },
         estimated_items = { "Bone rune" },
     }
@@ -31,6 +32,7 @@ function tests.saves_each_value_under_its_own_key()
 
     assert_helpers.equal(stored["Darkness.casts"], 2)
     assert_helpers.equal(stored["Darkness.gp"], 1234.5)
+    assert_helpers.equal(stored["Darkness.estimated_gp"], 700)
     assert_helpers.equal(stored["Darkness.rune.Bone rune"], nil)
     assert_helpers.equal(stored["Darkness.estimated.Bone rune"], true)
     assert_helpers.equal(stored["Darkness.unpriced.Bone rune"], false)
@@ -46,6 +48,7 @@ function tests.loads_what_was_saved()
     assert_helpers.equal(loaded.key, "Darkness")
     assert_helpers.equal(loaded.casts, 2)
     assert_helpers.equal(loaded.gp, 1234.5)
+    assert_helpers.equal(loaded.estimated_gp, 700)
     assert_helpers.same_lines(loaded.estimated_items, { "Bone rune" })
     assert_helpers.same_lines(loaded.unpriced_items, { "Flesh rune" })
 end

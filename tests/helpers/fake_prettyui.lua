@@ -66,6 +66,7 @@ function fake_prettyui.install()
                 local container = setmetatable({
                     kind = kind, parent = parent, options = options,
                     texts = {}, buttons = {}, checkboxes = {}, checkbox_order = {}, shown = 0,
+                    content = { kind = "content" },
                     root = { x = options.x or 80, y = options.y or 80, width = options.width, height = options.height },
                 }, Container)
                 table.insert(created, container)
@@ -73,7 +74,22 @@ function fake_prettyui.install()
             end,
         }
     end
-    prettyui = { SimpleView = constructor("SimpleView"), Window = constructor("Window") }
+    prettyui = {
+        SimpleView = constructor("SimpleView"),
+        Window = constructor("Window"),
+        -- Keeps the tooltip on the text it is bound to, as text.tooltip.
+        Tooltip = {
+            bind = function(owner, target, parent, value)
+                owner.fake_tooltip_target = target
+                target.tooltip = value
+                target.tooltip_parent = parent
+            end,
+            set = function(owner, value)
+                owner.fake_tooltip_target.tooltip = value
+                return true
+            end,
+        },
+    }
     return created
 end
 

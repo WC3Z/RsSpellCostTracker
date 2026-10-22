@@ -28,20 +28,25 @@ local tests = {}
 function tests.reports_casts_of_the_tracked_spells()
     local subscriptions = install_fake_event()
     local lord_of_bones = { key = "LordOfBones", ability_id = 49072 }
-    local penance = { key = "Penance", timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0xff, shift = 0 } }
+    local penance = { key = "Penance", timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0xff, shift = 0, per_cast = 48 } }
     local casts = {}
-    cast_listener.start({ lord_of_bones, penance }, function(spell)
-        table.insert(casts, spell)
+    cast_listener.start({ lord_of_bones, penance }, function(spell, times)
+        table.insert(casts, { spell = spell, times = times })
     end)
 
     send(subscriptions, "COMBATV2_JUST_USED_ABILITY", 0, 49072)
     send(subscriptions, "COMBATV2_JUST_USED_ABILITY", 0, 12345)
     send(subscriptions, "SOME_OTHER_VAR", 0, 49072)
     send(subscriptions, "COMBATV2_GENERIC_BASE_VAR_8", 262240, 262288)
+    send(subscriptions, "COMBATV2_GENERIC_BASE_VAR_8", 48, 240)
 
-    assert_helpers.equal(#casts, 2)
-    assert_helpers.equal(casts[1], lord_of_bones)
-    assert_helpers.equal(casts[2], penance)
+    assert_helpers.equal(#casts, 3)
+    assert_helpers.equal(casts[1].spell, lord_of_bones)
+    assert_helpers.equal(casts[1].times, 1)
+    assert_helpers.equal(casts[2].spell, penance)
+    assert_helpers.equal(casts[2].times, 1)
+    assert_helpers.equal(casts[3].spell, penance)
+    assert_helpers.equal(casts[3].times, 5)
     Event = nil
 end
 

@@ -13,7 +13,7 @@ local function game_area()
     return ui.Interfaces:GetComponent(id.Component.TOPLEVEL_V2__GAME_AREA)
 end
 
--- bounds: optional { x, y, width, height }; without it prettyui's default position is used.
+-- bounds: optional position and size; without it the window opens in prettyui's default spot.
 local function create(lines, bounds)
     bounds = bounds or { width = 260, height = 160 }
     window = prettyui.Window.new(game_area(), {
@@ -43,9 +43,10 @@ local function remove()
     text = nil
 end
 
--- prettyui's window only ever grows its scrollable height, and text rows can't
--- be removed from it. Blanked rows would keep the scrollbar after lines are
--- hidden, so with fewer lines the window is rebuilt in the same place and size.
+-- prettyui windows can grow but never shrink their content, and text rows
+-- can't be removed. If we just blanked the rows we no longer need, the window
+-- would keep a scrollbar for the empty space. So when there are fewer lines
+-- than before, the window is rebuilt in the same place and at the same size.
 local function show_lines(lines)
     if #lines < line_count then
         local root = window.root

@@ -1,14 +1,15 @@
--- The choices the player makes on the plugin's page. Saved in PersistentDB, so
--- they are kept when the plugin restarts.
+-- The settings the player picks on the plugin's page. They are saved in the
+-- game's plugin storage (PersistentDB), so they're kept between restarts.
 local settings = require("src/config")
 
 local player_settings = {}
 
--- Each option:
--- name:   the part of the totals it controls, as used by totals_text.lines
--- db_key: where the choice is saved in PersistentDB
--- label:  the checkbox text
--- tooltip: optional text shown when hovering over the checkbox
+-- Each setting has:
+-- name:           which part of the cost tracker window it shows or hides
+-- db_key:         the name it is saved under
+-- label:          the checkbox text
+-- tooltip:        optional text shown when hovering over the checkbox
+-- off_by_default: optional; true if the setting starts off instead of on
 
 -- Whether Lord of Bones casts made while wearing Necromancy gear are ignored.
 player_settings.only_stalls_option = {
@@ -16,6 +17,14 @@ player_settings.only_stalls_option = {
     label = "Only track Lord of Bones stalls",
     tooltip = "Only counts Lord of Bones casts made without any Necromancy gear on, "
         .. "i.e. when it is cast to stall. Turn off to count every cast.",
+}
+
+-- Whether runes are priced at what shops sell them for instead of GE prices.
+player_settings.iron_btw_option = {
+    db_key = "ironBtw",
+    label = "Iron Btw",
+    tooltip = "Tracks shop cost instead of GE prices",
+    off_by_default = true,
 }
 
 -- What the cost tracker window shows, in the order the checkboxes are shown.
@@ -37,9 +46,13 @@ for _, spell in ipairs(settings.spells) do
     })
 end
 
--- Every setting is on unless the player has turned it off.
+-- A setting the player hasn't changed is on, unless it is off_by_default.
 function player_settings.is_on(option)
-    return PersistentDB:GetBool(option.db_key) ~= false
+    local saved = PersistentDB:GetBool(option.db_key)
+    if saved == nil then
+        return not option.off_by_default
+    end
+    return saved
 end
 
 function player_settings.set(option, on)
@@ -48,6 +61,10 @@ end
 
 function player_settings.only_stalls()
     return player_settings.is_on(player_settings.only_stalls_option)
+end
+
+function player_settings.iron_btw()
+    return player_settings.is_on(player_settings.iron_btw_option)
 end
 
 -- Which parts the player wants to see in the cost tracker window, e.g.

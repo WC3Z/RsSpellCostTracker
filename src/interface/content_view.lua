@@ -12,8 +12,9 @@ local on_open_window
 local view
 local text
 
--- Each setting gets its own single-checkbox group, so onChange always refers
--- to that one setting. prettyui passes the new checked state as the 4th argument.
+-- Adds a checkbox for one setting. Each checkbox is added on its own, so when
+-- it changes we know which setting it was. prettyui gives the new on/off state
+-- as the 4th argument.
 local function add_checkbox(option)
     view:AddCheckboxButton({
         {
@@ -30,15 +31,16 @@ local function add_checkbox(option)
     })
 end
 
--- callbacks.cost_lines() returns the cost text shown on this page.
--- callbacks.settings_changed() is called after a checkbox is toggled.
--- callbacks.open_window() is called when the player clicks "Open cost tracker".
+-- Sets up the page. callbacks:
+--   cost_lines():       gives the cost text to show on the page
+--   settings_changed(): called when the player ticks or unticks a checkbox
+--   open_window():      called when the player clicks "Open cost tracker"
 function content_view.start(callbacks)
     get_cost_lines = callbacks.cost_lines
     on_settings_changed = callbacks.settings_changed
     on_open_window = callbacks.open_window
     Event.ContentLayerReady.Subscribe(subscription_name, function(event)
-        -- The game fires this every time the page is shown, so replace any earlier view.
+        -- This runs every time the page is opened, so throw away the old one first.
         if view then view:Destroy() end
 
         local parent = event.component
@@ -49,13 +51,14 @@ function content_view.start(callbacks)
 
         view:AddTitle("Spell Cost Tracker")
         add_checkbox(player_settings.only_stalls_option)
+        add_checkbox(player_settings.iron_btw_option)
         for _, option in ipairs(player_settings.options) do
             add_checkbox(option)
         end
         for _, option in ipairs(player_settings.spell_options) do
             add_checkbox(option)
         end
-        -- Wrapped so prettyui's button arguments (self, active) aren't passed on.
+        -- Wrapped so the extra arguments prettyui passes to button clicks aren't passed on.
         view:AddSimpleButton("Open cost tracker", function()
             on_open_window()
         end)

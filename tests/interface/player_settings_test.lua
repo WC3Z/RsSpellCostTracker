@@ -33,6 +33,16 @@ function tests.everything_is_shown_when_nothing_is_saved()
     assert_helpers.equal(shown.spells.Darkness, true)
 end
 
+function tests.iron_btw_is_off_until_turned_on()
+    local stored = fake_persistent_db.install()
+
+    assert_helpers.equal(player_settings.iron_btw(), false)
+    player_settings.set(player_settings.iron_btw_option, true)
+
+    assert_helpers.equal(stored.ironBtw, true)
+    assert_helpers.equal(player_settings.iron_btw(), true)
+end
+
 function tests.a_setting_turned_off_is_saved_and_hidden()
     local stored = fake_persistent_db.install()
 

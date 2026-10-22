@@ -6,6 +6,7 @@ local test_files = {
     "tests/tracker/cast_detection_test",
     "tests/tracker/spell_tracker_test",
     "tests/tracker/totals_text_test",
+    "tests/tracker/shop_cost_test",
     "tests/game/prices_test",
     "tests/game/cast_listener_test",
     "tests/game/saved_totals_test",

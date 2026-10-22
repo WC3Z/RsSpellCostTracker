@@ -9,6 +9,7 @@ local function spell(key, name, overrides)
         casts = 2,
         runes_used = { ["Spirit rune"] = 16, ["Bone rune"] = 12 },
         gp = 9060,
+        estimated_gp = 0,
         unpriced_items = {},
         estimated_items = {},
     }
@@ -123,12 +124,60 @@ function tests.notes_items_without_a_price()
     assert_helpers.equal(lines[1], "Darkness: 0 gp (no price: Bone rune, Spirit rune)")
 end
 
-function tests.notes_items_priced_with_fallback_price()
-    local lines = totals_text.cost_lines({
-        spell("Darkness", "Darkness", { gp = 4530, estimated_items = { "Bone rune", "Flesh rune" } }),
+local estimated_darkness = spell("Darkness", "Darkness", {
+    casts = 1, runes_used = { ["Bone rune"] = 20 }, gp = 4530,
+    estimated_gp = 1400, estimated_items = { "Flesh rune", "Bone rune" },
+})
+
+function tests.cost_does_not_mention_the_estimate()
+    local lines = totals_text.cost_lines({ estimated_darkness })
+
+    assert_helpers.equal(lines[1], "Darkness: 4,530 gp")
+end
+
+function tests.adds_the_estimated_part_under_the_total_with_the_runes_in_a_tooltip()
+    local lines = totals_text.lines({ lord_of_bones, estimated_darkness }, { cost = true, total = true })
+
+    assert_helpers.same_lines(lines, {
+        "Lord of Bones",
+        "  Cost: 9,060 gp",
+        "Darkness",
+        "  Cost: 4,530 gp",
+        "Total: 13,590 gp",
+        "Estimated: 1,400 gp",
+    })
+    assert_helpers.equal(
+        lines[6].tooltip,
+        "The part of the cost that uses rough prices, because the real price wasn't available for: Bone rune, Flesh rune"
+    )
+end
+
+function tests.adds_up_the_estimated_part_of_each_shown_spell()
+    local other = spell("Penance", "Penance", { estimated_gp = 100, estimated_items = { "Soul rune" } })
+
+    local lines = totals_text.lines({ other, estimated_darkness }, { total = true })
+
+    assert_helpers.equal(lines[#lines].text, "Estimated: 1,500 gp")
+end
+
+function tests.leaves_out_the_estimate_of_hidden_spells()
+    local lines = totals_text.lines({ lord_of_bones, estimated_darkness }, {
+        cost = true, total = true, spells = { Darkness = false },
     })
 
-    assert_helpers.equal(lines[1], "Darkness: 4,530 gp (estimated: Bone rune, Flesh rune)")
+    assert_helpers.same_lines(lines, { "Lord of Bones", "  Cost: 9,060 gp", "Total: 9,060 gp" })
+end
+
+function tests.leaves_out_the_estimate_when_no_cost_is_shown()
+    local lines = totals_text.lines({ estimated_darkness }, { casts = true, cost = false, total = false })
+
+    assert_helpers.same_lines(lines, { "Darkness: 1 cast" })
+end
+
+function tests.cost_lines_end_with_the_estimate()
+    local lines = totals_text.cost_lines({ estimated_darkness })
+
+    assert_helpers.same_lines(lines, { "Darkness: 4,530 gp", "Total: 4,530 gp", "Estimated: 1,400 gp" })
 end
 
 function tests.cost_lines_show_every_cast_spell_and_the_total()

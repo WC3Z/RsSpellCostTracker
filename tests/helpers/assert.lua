@@ -6,8 +6,16 @@ function assert_helpers.equal(actual, expected)
     end
 end
 
+-- Compares the text of each line. A line can be a string or { text, tooltip }.
 function assert_helpers.same_lines(actual, expected)
-    assert_helpers.equal(table.concat(actual, "\n"), table.concat(expected, "\n"))
+    local function texts(lines)
+        local result = {}
+        for i, line in ipairs(lines) do
+            result[i] = type(line) == "table" and line.text or line
+        end
+        return table.concat(result, "\n")
+    end
+    assert_helpers.equal(texts(actual), texts(expected))
 end
 
 return assert_helpers

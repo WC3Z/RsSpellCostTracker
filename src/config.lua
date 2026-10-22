@@ -2,14 +2,27 @@
 -- Necromancy gear for Lord of Bones stalls.
 return {
     -- The spells whose cost is tracked, in the order they are shown.
-    -- key:        used for the spell's show/hide setting
-    -- ability_id: for abilities, the value of COMBATV2_JUST_USED_ABILITY when it is cast
-    -- timer:      for spells that aren't abilities, where their timer is kept:
-    --             the variable it is packed into, and its bits in that variable.
-    --             A cast is counted whenever the timer goes up.
-    -- runes:      runes used by one cast
-    -- can_stall:  the spell is cast to stall; with the "Only track Lord of Bones
-    --             stalls" setting on, casts while wearing Necromancy gear are ignored
+    --
+    -- key:        a short name for the spell, used to save its settings and totals
+    -- name:       the name shown to the player
+    -- ability_id: how the game identifies the spell when it is cast. Only used
+    --             for spells the game reports directly, like Lord of Bones.
+    -- timer:      for spells the game doesn't report directly. Instead we watch
+    --             how long the spell has left to run: each cast adds 12 minutes,
+    --             so whenever the time left goes up, the spell was cast. These
+    --             spells can also be multi-cast (5 casts at once).
+    --             var:           the game value that holds the time left
+    --             mask, shift:   some game values hold several things at once;
+    --                            these pick out the part that is this spell's time
+    --             per_cast:      how much one cast adds to the time left (12 minutes)
+    --             cast_tick_var: Darkness stores the moment it runs out instead of
+    --                            the time left. To work out the time left we also
+    --                            need the moment it was cast, which the game keeps
+    --                            in this value.
+    -- runes:      the runes one cast uses
+    -- can_stall:  Lord of Bones only. It is often cast just to stall, and with the
+    --             "Only track Lord of Bones stalls" setting on, casts made while
+    --             wearing Necromancy gear are ignored.
     spells = {
         {
             key = "LordOfBones",
@@ -26,7 +39,7 @@ return {
         {
             key = "AnimateDead",
             name = "Animate Dead",
-            timer = { var = "COMBATV2_GENERIC_BASE_VAR_7", mask = 0xff000000, shift = 24 },
+            timer = { var = "COMBATV2_GENERIC_BASE_VAR_7", mask = 0xff000000, shift = 24, per_cast = 48 },
             runes = {
                 ["Earth rune"] = 30,
                 ["Death rune"] = 15,
@@ -37,7 +50,7 @@ return {
         {
             key = "Vampyrism",
             name = "Vampyrism",
-            timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0x3ff00, shift = 8 },
+            timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0x3ff00, shift = 8, per_cast = 48 },
             runes = {
                 ["Fire rune"] = 40,
                 ["Death rune"] = 10,
@@ -48,7 +61,7 @@ return {
         {
             key = "Penance",
             name = "Penance",
-            timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0xff, shift = 0 },
+            timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0xff, shift = 0, per_cast = 48 },
             runes = {
                 ["Body rune"] = 30,
                 ["Chaos rune"] = 20,
@@ -59,7 +72,11 @@ return {
         {
             key = "Darkness",
             name = "Darkness",
-            ability_id = 48331,
+            timer = {
+                var = "COMBATV2_BUFF_NECROMANCY_DARKNESS_END",
+                per_cast = 1200,
+                cast_tick_var = "COMBATV2_COOLDOWN_NECROMANCY_DARKNESS_START",
+            },
             runes = {
                 ["Spirit rune"] = 40,
                 ["Bone rune"] = 20,
@@ -69,7 +86,7 @@ return {
         },
     },
 
-    -- Item ids of the runes
+    -- The game's item id for each rune, used to look up its Grand Exchange price
     item_ids = {
         ["Spirit rune"] = 55337,
         ["Bone rune"] = 55338,
@@ -85,8 +102,34 @@ return {
         ["Soul rune"] = 566,
     },
 
-    -- Prices in gp used when the Grand Exchange price of a rune can't be
-    -- fetched. Casts priced this way are marked as estimated in the cost tracker.
+    -- The game's internal name for each rune, used to look up its shop price
+    item_config_names = {
+        ["Spirit rune"] = "SPIRITRUNE",
+        ["Bone rune"] = "BONERUNE",
+        ["Flesh rune"] = "FLESHRUNE",
+        ["Miasma rune"] = "MIASMARUNE",
+        ["Earth rune"] = "EARTHRUNE",
+        ["Fire rune"] = "FIRERUNE",
+        ["Body rune"] = "BODYRUNE",
+        ["Chaos rune"] = "CHAOSRUNE",
+        ["Law rune"] = "LAWRUNE",
+        ["Death rune"] = "DEATHRUNE",
+        ["Blood rune"] = "BLOODRUNE",
+        ["Soul rune"] = "SOULRUNE",
+    },
+
+    -- Runes that cost more in shops than the game's listed price. Thalmund's
+    -- Wares in Um sells Necromancy runes at 10 times the listed price. (The shop
+    -- that sells them at the listed price never has any in stock.)
+    store_price_multipliers = {
+        ["Spirit rune"] = 10,
+        ["Bone rune"] = 10,
+        ["Flesh rune"] = 10,
+        ["Miasma rune"] = 10,
+    },
+
+    -- Rough prices in gp, used when a rune's Grand Exchange price isn't
+    -- available. Costs that use these are marked as "estimated" for the player.
     fallback_prices = {
         ["Spirit rune"] = 70,
         ["Bone rune"] = 350,
@@ -102,7 +145,8 @@ return {
         ["Soul rune"] = 1000,
     },
 
-    -- Item ids of Necromancy gear
+    -- Item ids of Necromancy gear, used to tell Lord of Bones stalls apart from
+    -- normal Necromancy combat. The game's internal name is next to each id.
     necro_item_ids = {
         -- Underworld, T90
         [55424] = true, -- NECRO_UNDERWORLD_HEAD_T90

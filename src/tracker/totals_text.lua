@@ -1,22 +1,20 @@
--- Turns the tracker totals into the text lines shown to the player.
+-- Turns the spell totals into the lines of text shown to the player.
 local totals_text = {}
 
 -- 1234567 -> "1,234,567 gp"
--- Reversing the digits lets the comma be inserted after every 3 digits from the
--- right; a comma left in front of the number is then removed.
+-- Commas go every 3 digits counting from the right, so the digits are
+-- reversed, a comma is added after every 3, and then they're reversed back.
+-- That can leave a comma at the very front (",123"), which is removed.
 local function format_gp(gp)
     local digits = tostring(math.floor(gp))
     local grouped = digits:reverse():gsub("(%d%d%d)", "%1,"):reverse()
     return (grouped:gsub("^,", "")) .. " gp"
 end
 
--- e.g. "9,060 gp (estimated: Bone rune)". Runes priced with the fallback
--- price, or with no price at all, are named so the player knows the cost is rough.
+-- e.g. "9,060 gp (no price: Bone rune)". Runes that couldn't be priced at all
+-- are listed so the player knows the real cost is higher.
 local function cost_text(spell)
     local text = format_gp(spell.gp)
-    if #spell.estimated_items > 0 then
-        text = text .. " (estimated: " .. table.concat(spell.estimated_items, ", ") .. ")"
-    end
     if #spell.unpriced_items > 0 then
         text = text .. " (no price: " .. table.concat(spell.unpriced_items, ", ") .. ")"
     end
@@ -30,7 +28,7 @@ local function plural(count, word)
     return count .. " " .. word .. "s"
 end
 
--- Spells that have been cast at least once and that is_shown(spell) allows.
+-- The spells that have been cast at least once and that the player wants shown.
 local function cast_spells(spell_totals, is_shown)
     local result = {}
     for _, spell in ipairs(spell_totals) do
@@ -47,6 +45,40 @@ local function total_gp(spells)
         gp = gp + spell.gp
     end
     return gp
+end
+
+-- A line saying how much of the cost was priced with rough prices, with a
+-- tooltip naming the runes. nil when none of it was.
+local function estimated_line(spells)
+    local gp = 0
+    local item_set = {}
+    for _, spell in ipairs(spells) do
+        gp = gp + spell.estimated_gp
+        for _, item_name in ipairs(spell.estimated_items) do
+            item_set[item_name] = true
+        end
+    end
+    if gp <= 0 then
+        return nil
+    end
+
+    local item_names = {}
+    for item_name in pairs(item_set) do
+        table.insert(item_names, item_name)
+    end
+    table.sort(item_names)
+    return {
+        text = "Estimated: " .. format_gp(gp),
+        tooltip = "The part of the cost that uses rough prices, because the real price "
+            .. "wasn't available for: " .. table.concat(item_names, ", "),
+    }
+end
+
+local function add_estimated_line(lines, spells)
+    local line = estimated_line(spells)
+    if line then
+        table.insert(lines, line)
+    end
 end
 
 local function add_spell_lines(lines, spell, shown)
@@ -72,12 +104,14 @@ local function add_spell_lines(lines, spell, shown)
     end
 end
 
--- spell_totals: as returned by SpellTracker:totals()
--- shown picks which parts to include, e.g.
--- { casts = true, runes = false, cost = true, total = true, spells = { Penance = false } }.
--- cost is each spell's cost, total the cost of all shown spells together.
--- A spell missing from shown.spells is shown. Without shown, everything is included.
--- Spells that haven't been cast are left out.
+-- The lines for the cost tracker window.
+-- spell_totals: every spell's totals, as SpellTracker:totals() gives them
+-- shown: which parts the player wants to see, e.g.
+--   { casts = true, runes = false, cost = true, total = true, spells = { Penance = false } }
+--   "cost" is each spell's own cost, "total" is all shown spells added up.
+--   Spells not listed under "spells" are shown. Leave shown out to show everything.
+-- Spells that haven't been cast yet are always left out.
+-- Each line is a string, except the estimated line, which is { text, tooltip }.
 function totals_text.lines(spell_totals, shown)
     shown = shown or { casts = true, runes = true, cost = true, total = true }
     local spells_shown = shown.spells or {}
@@ -96,6 +130,9 @@ function totals_text.lines(spell_totals, shown)
     if shown.total then
         table.insert(lines, "Total: " .. format_gp(total_gp(spells)))
     end
+    if shown.cost or shown.total then
+        add_estimated_line(lines, spells)
+    end
     return lines
 end
 
@@ -112,6 +149,7 @@ function totals_text.cost_lines(spell_totals)
         table.insert(lines, spell.name .. ": " .. cost_text(spell))
     end
     table.insert(lines, "Total: " .. format_gp(total_gp(spells)))
+    add_estimated_line(lines, spells)
     return lines
 end
 

@@ -1,12 +1,12 @@
 -- Reads the player's worn equipment from the game.
 local equipment = {}
 
--- Number of slots in the game's worn equipment inventory.
+-- How many equipment slots the player has (head, body, weapon and so on).
 local worn_slot_count = 18
 
--- Returns { [slot] = item id } for everything the player is wearing.
+-- Returns the item id of everything the player is wearing, by slot.
 function equipment.worn_item_ids()
-    -- `config` here is the game's global, not this plugin's src/config.lua.
+    -- `config` here is the game's own lookup table, not this plugin's src/config.lua.
     local worn = Inventory.Find(config.Inv["WORN"])
     local item_ids = {}
 

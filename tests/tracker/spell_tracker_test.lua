@@ -130,6 +130,18 @@ function tests.prices_each_cast_when_it_happens()
     assert_helpers.equal(totals_for(tracker, "LordOfBones").gp, 8 * 100 + 8 * 200 + 2 * 6 * 10)
 end
 
+function tests.a_multi_cast_counts_and_prices_every_cast()
+    local tracker = new_tracker({ get_price = price_list({ ["Law rune"] = 400 }) })
+
+    assert_helpers.equal(tracker:on_cast(third_spell, no_gear, 4), third_spell)
+    tracker:on_cast(third_spell, no_gear)
+
+    local penance = totals_for(tracker, "Penance")
+    assert_helpers.equal(penance.casts, 5)
+    assert_helpers.equal(penance.runes_used["Law rune"], 5 * 3)
+    assert_helpers.equal(penance.gp, 5 * 3 * 400)
+end
+
 function tests.keeps_listing_rune_that_was_unpriced_for_an_earlier_cast()
     local prices = { ["Bone rune"] = 100 }
     local tracker = new_tracker({ get_price = price_list(prices) })
@@ -162,6 +174,7 @@ function tests.uses_fallback_price_when_price_is_missing()
 
     local totals = totals_for(tracker, "LordOfBones")
     assert_helpers.equal(totals.gp, 8 * 100 + 6 * 50)
+    assert_helpers.equal(totals.estimated_gp, 6 * 50)
     assert_helpers.equal(#totals.unpriced_items, 0)
     assert_helpers.equal(#totals.estimated_items, 1)
     assert_helpers.equal(totals.estimated_items[1], "Soul rune")
@@ -191,6 +204,7 @@ function tests.keeps_listing_rune_that_was_estimated_for_an_earlier_cast()
 
     local totals = totals_for(tracker, "Darkness")
     assert_helpers.equal(totals.gp, 20 * 350 + 20 * 100)
+    assert_helpers.equal(totals.estimated_gp, 20 * 350)
     assert_helpers.equal(totals.estimated_items[1], "Bone rune")
 end
 
@@ -204,6 +218,7 @@ function tests.reset_clears_totals()
     assert_helpers.equal(totals.casts, 0)
     assert_helpers.equal(next(totals.runes_used), nil)
     assert_helpers.equal(totals.gp, 0)
+    assert_helpers.equal(totals.estimated_gp, 0)
     assert_helpers.equal(#totals.unpriced_items, 0)
     assert_helpers.equal(#totals.estimated_items, 0)
 end
@@ -222,7 +237,7 @@ function tests.restore_continues_from_saved_totals()
 
     tracker:restore({
         {
-            key = "Darkness", casts = 3, gp = 6000,
+            key = "Darkness", casts = 3, gp = 6000, estimated_gp = 700,
             unpriced_items = {}, estimated_items = { "Bone rune" },
         },
     })
@@ -232,7 +247,18 @@ function tests.restore_continues_from_saved_totals()
     assert_helpers.equal(totals.casts, 4)
     assert_helpers.equal(totals.runes_used["Bone rune"], 80)
     assert_helpers.equal(totals.gp, 6000 + 20 * 100)
+    assert_helpers.equal(totals.estimated_gp, 700)
     assert_helpers.equal(totals.estimated_items[1], "Bone rune")
+end
+
+function tests.restore_starts_estimated_gp_at_zero_for_totals_saved_without_it()
+    local tracker = new_tracker()
+
+    tracker:restore({
+        { key = "Darkness", casts = 3, gp = 6000, unpriced_items = {}, estimated_items = { "Bone rune" } },
+    })
+
+    assert_helpers.equal(totals_for(tracker, "Darkness").estimated_gp, 0)
 end
 
 function tests.restore_skips_spells_that_are_not_tracked()
