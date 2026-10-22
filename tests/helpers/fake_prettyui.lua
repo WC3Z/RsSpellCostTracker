@@ -56,7 +56,7 @@ function Container:visible_lines()
     return lines
 end
 
--- Installs the fake and returns a list that every created view and window is added to.
+-- Installs the fake and returns a list that every created view, window and dialog is added to.
 function fake_prettyui.install()
     local created = {}
     local function constructor(kind)
@@ -67,6 +67,7 @@ function fake_prettyui.install()
                     kind = kind, parent = parent, options = options,
                     texts = {}, buttons = {}, checkboxes = {}, checkbox_order = {}, shown = 0,
                     content = { kind = "content" },
+                    background = { rgba = 0xFFFFFFFF },
                     root = { x = options.x or 80, y = options.y or 80, width = options.width, height = options.height },
                 }, Container)
                 table.insert(created, container)
@@ -77,6 +78,14 @@ function fake_prettyui.install()
     prettyui = {
         SimpleView = constructor("SimpleView"),
         Window = constructor("Window"),
+        -- Confirm dialogs are added to the created list as { kind = "Confirm", parent, options }.
+        Confirm = {
+            new = function(parent, options)
+                local dialog = { kind = "Confirm", parent = parent, options = options }
+                table.insert(created, dialog)
+                return dialog
+            end,
+        },
         -- Keeps the tooltip on the text it is bound to, as text.tooltip.
         Tooltip = {
             bind = function(owner, target, parent, value)

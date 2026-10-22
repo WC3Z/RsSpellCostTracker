@@ -33,6 +33,14 @@ function tests.everything_is_shown_when_nothing_is_saved()
     assert_helpers.equal(shown.spells.Darkness, true)
 end
 
+function tests.transparent_window_is_off_until_turned_on()
+    fake_persistent_db.install()
+
+    assert_helpers.equal(player_settings.transparent_window(), false)
+    player_settings.set(player_settings.transparent_window_option, true)
+    assert_helpers.equal(player_settings.transparent_window(), true)
+end
+
 function tests.iron_btw_is_off_until_turned_on()
     local stored = fake_persistent_db.install()
 

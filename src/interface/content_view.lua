@@ -1,5 +1,5 @@
--- The plugin's page: the player's settings, a button that opens the cost
--- tracker window, and the cost of each spell so far.
+-- The plugin's page: the player's settings, buttons to open the cost tracker
+-- window and to reset the totals, and the cost of each spell so far.
 local TextLines = require("src/interface/text_lines")
 local player_settings = require("src/interface/player_settings")
 
@@ -9,6 +9,7 @@ local subscription_name = "spell-cost-tracker-content"
 local get_cost_lines
 local on_settings_changed
 local on_open_window
+local on_reset_totals
 local view
 local text
 
@@ -31,14 +32,29 @@ local function add_checkbox(option)
     })
 end
 
+-- Asks the player to confirm before the totals are reset, since that can't
+-- be undone.
+local function confirm_reset(parent)
+    prettyui.Confirm.new(parent, {
+        title = "Reset totals",
+        body = "This sets the casts and cost of every spell back to zero. This can't be undone.",
+        confirmLabel = "RESET",
+        onConfirm = function()
+            on_reset_totals()
+        end,
+    })
+end
+
 -- Sets up the page. callbacks:
 --   cost_lines():       gives the cost text to show on the page
 --   settings_changed(): called when the player ticks or unticks a checkbox
 --   open_window():      called when the player clicks "Open cost tracker"
+--   reset_totals():     called when the player confirms "Reset totals"
 function content_view.start(callbacks)
     get_cost_lines = callbacks.cost_lines
     on_settings_changed = callbacks.settings_changed
     on_open_window = callbacks.open_window
+    on_reset_totals = callbacks.reset_totals
     Event.ContentLayerReady.Subscribe(subscription_name, function(event)
         -- This runs every time the page is opened, so throw away the old one first.
         if view then view:Destroy() end
@@ -52,6 +68,7 @@ function content_view.start(callbacks)
         view:AddTitle("Spell Cost Tracker")
         add_checkbox(player_settings.only_stalls_option)
         add_checkbox(player_settings.iron_btw_option)
+        add_checkbox(player_settings.transparent_window_option)
         for _, option in ipairs(player_settings.options) do
             add_checkbox(option)
         end
@@ -61,6 +78,9 @@ function content_view.start(callbacks)
         -- Wrapped so the extra arguments prettyui passes to button clicks aren't passed on.
         view:AddSimpleButton("Open cost tracker", function()
             on_open_window()
+        end)
+        view:AddSimpleButton("Reset totals", function()
+            confirm_reset(parent)
         end)
         text = TextLines.new(view)
         text:set(get_cost_lines())

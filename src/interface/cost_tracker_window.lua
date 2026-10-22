@@ -7,6 +7,16 @@ local cost_tracker_window = {}
 local window
 local text
 local line_count = 0
+local transparent = false
+
+-- The background's colour as 0xRRGGBBAA. White leaves the background image as
+-- it is, and the last two digits set how see-through it is (FF = solid).
+local solid_background = 0xFFFFFFFF
+local transparent_background = 0xFFFFFF60
+
+local function apply_transparency()
+    window.background.rgba = transparent and transparent_background or solid_background
+end
 
 -- The main game screen, so the window can be moved anywhere over the game.
 local function game_area()
@@ -32,6 +42,7 @@ local function create(lines, bounds)
             text = nil
         end,
     })
+    apply_transparency()
     text = TextLines.new(window)
     text:set(lines)
     line_count = #lines
@@ -73,6 +84,15 @@ end
 function cost_tracker_window.refresh(lines)
     if window then
         show_lines(lines)
+    end
+end
+
+-- Makes the window's background see-through or solid, now and for windows
+-- opened later.
+function cost_tracker_window.set_transparent(on)
+    transparent = on
+    if window then
+        apply_transparency()
     end
 end
 

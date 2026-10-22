@@ -50,6 +50,20 @@ local function open_cost_tracker()
     cost_tracker_window.open(window_lines())
 end
 
+local function settings_changed()
+    cost_tracker_window.set_transparent(player_settings.transparent_window())
+    refresh_views()
+end
+
+-- Sets every spell back to zero, both in the tracker and in what is saved.
+local function reset_totals()
+    tracker:reset()
+    for _, spell in ipairs(settings.spells) do
+        saved_totals.save(spell, tracker:spell_totals(spell))
+    end
+    refresh_views()
+end
+
 local function on_cast(spell, casts)
     if tracker:on_cast(spell, equipment.worn_item_ids(), casts) then
         saved_totals.save(spell, tracker:spell_totals(spell))
@@ -57,12 +71,14 @@ local function on_cast(spell, casts)
     end
 end
 
+cost_tracker_window.set_transparent(player_settings.transparent_window())
 cast_listener.start(settings.spells, on_cast)
 
 content_view.start({
     cost_lines = page_lines,
-    settings_changed = refresh_views,
+    settings_changed = settings_changed,
     open_window = open_cost_tracker,
+    reset_totals = reset_totals,
 })
 
 -- Called by the game when the plugin is turned off.

@@ -120,4 +120,43 @@ function tests.destroy_removes_the_window()
     assert_helpers.same_lines(created[1]:visible_lines(), { "a" })
 end
 
+function tests.window_is_solid_by_default()
+    local created = install_fakes()
+    cost_tracker_window.set_transparent(false)
+
+    cost_tracker_window.open({ "a" })
+
+    assert_helpers.equal(created[1].background.rgba, 0xFFFFFFFF)
+    cost_tracker_window.destroy()
+end
+
+function tests.set_transparent_changes_the_open_window()
+    local created = install_fakes()
+    cost_tracker_window.set_transparent(false)
+    cost_tracker_window.open({ "a" })
+
+    cost_tracker_window.set_transparent(true)
+
+    assert_helpers.equal(created[1].background.rgba < 0xFFFFFFFF, true)
+    cost_tracker_window.set_transparent(false)
+    assert_helpers.equal(created[1].background.rgba, 0xFFFFFFFF)
+    cost_tracker_window.destroy()
+end
+
+function tests.stays_transparent_when_rebuilt_or_reopened()
+    local created = install_fakes()
+    cost_tracker_window.set_transparent(true)
+    cost_tracker_window.open({ "a", "b" })
+
+    cost_tracker_window.refresh({ "a" })
+    cost_tracker_window.destroy()
+    cost_tracker_window.open({ "a" })
+
+    assert_helpers.equal(#created, 3)
+    assert_helpers.equal(created[2].background.rgba < 0xFFFFFFFF, true)
+    assert_helpers.equal(created[3].background.rgba < 0xFFFFFFFF, true)
+    cost_tracker_window.set_transparent(false)
+    cost_tracker_window.destroy()
+end
+
 return tests

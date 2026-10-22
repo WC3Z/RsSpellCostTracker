@@ -27,6 +27,13 @@ player_settings.iron_btw_option = {
     off_by_default = true,
 }
 
+-- Whether the cost tracker window's background is see-through.
+player_settings.transparent_window_option = {
+    db_key = "transparentWindow",
+    label = "Transparent window",
+    off_by_default = true,
+}
+
 -- What the cost tracker window shows, in the order the checkboxes are shown.
 player_settings.options = {
     { name = "casts", db_key = "showCasts", label = "Show cast count" },
@@ -65,6 +72,10 @@ end
 
 function player_settings.iron_btw()
     return player_settings.is_on(player_settings.iron_btw_option)
+end
+
+function player_settings.transparent_window()
+    return player_settings.is_on(player_settings.transparent_window_option)
 end
 
 -- Which parts the player wants to see in the cost tracker window, e.g.
