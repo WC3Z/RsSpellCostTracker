@@ -4,3 +4,7 @@ Spell-Cost-Tracker/
 configFiles/
 
 debug/
+
+.idea/
+
+.luarc.json
