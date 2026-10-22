@@ -39,7 +39,7 @@ Ironmen can't buy runes on the Grand Exchange, so with **Iron btw** on, runes ar
 - Standard runes at Baba Yaga's price on Lunar Isle.
 - Necromancy runes at Thalmund's Wares in Um, which sells them at 10 times their item value (`store_price_multipliers` in `src/config.lua`).
 
-Shop prices are read from the game's item data, so no shop has to be opened. They are the price at full stock; buying many at once from a shop low on stock costs more.
+Shop prices are read from the game's item data.
 
 The Grand Exchange cost is always tracked and saved. Shop prices don't change, so the shop cost is worked out from the runes used. Turning Iron btw on or off reprices all casts, including earlier ones.
 
