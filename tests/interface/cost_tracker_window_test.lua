@@ -17,10 +17,10 @@ local function install_fakes()
     return fake_prettyui.install()
 end
 
--- The lines for the window, with the session tab empty and stopped unless given.
+-- The lines for the window, with the session tab empty and paused unless given.
 ---@return WindowPages
 local function pages(total, session, session_state)
-    return { total = total, session = session or {}, session_state = session_state or "stopped" }
+    return { total = total, session = session or {}, session_state = session_state or "paused" }
 end
 
 -- Session controls that record which ones were used.
@@ -28,15 +28,20 @@ local function record_session_controls()
     local used = {}
     local function record(name) return function() table.insert(used, name) end end
     cost_tracker_window.set_session_controls({
-        start = record("start"), stop = record("stop"), pause = record("pause"), resume = record("resume"),
+        pause = record("pause"), resume = record("resume"),
+        new_session = record("new_session"), show_history = record("show_history"),
     })
     return used
 end
 
--- The start/stop and pause/resume buttons on the Session tab.
-local function session_buttons(window)
-    local buttons = window.tabs:GetPage(2).sprite_buttons
-    return buttons[1], buttons[2]
+-- The pause/resume button on the Session tab.
+local function pause_resume_button(window)
+    return window.tabs:GetPage(2).sprite_buttons[1]
+end
+
+-- A text button on the Session tab.
+local function session_button(window, label)
+    return window.tabs:GetPage(2).buttons[label]
 end
 
 -- The visible lines on the Total tab (1) or Session tab (2).
@@ -150,61 +155,79 @@ function tests.resizing_the_window_re_measures_the_tabs_on_the_same_tab()
     cost_tracker_window.destroy()
 end
 
-function tests.stopped_session_shows_start_and_a_disabled_pause()
+function tests.paused_session_shows_resume()
     local created = install_fakes()
 
-    cost_tracker_window.open(pages({ "a" }, { "Session stopped" }, "stopped"))
+    cost_tracker_window.open(pages({ "a" }, { "Session paused" }, "paused"))
 
-    local start_stop, pause_resume = session_buttons(created[1])
-    assert_helpers.equal(start_stop.sprite, "PLAY")
-    assert_helpers.equal(pause_resume.sprite, "PAUSE")
-    assert_helpers.equal(pause_resume.disabled, true)
-    assert_helpers.equal(pause_resume.options.inline, true)
+    local button = pause_resume_button(created[1])
+    assert_helpers.equal(button.sprite, "PLAY")
+    assert_helpers.equal(button.tooltip, "Resume the session")
     cost_tracker_window.destroy()
 end
 
-function tests.session_buttons_follow_the_session_state()
+function tests.pause_resume_button_follows_the_session_state()
     local created = install_fakes()
-    cost_tracker_window.open(pages({ "a" }, { "s" }, "stopped"))
-    local start_stop, pause_resume = session_buttons(created[1])
+    cost_tracker_window.open(pages({ "a" }, { "s" }, "paused"))
+    local button = pause_resume_button(created[1])
 
     cost_tracker_window.refresh(pages({ "a" }, { "s" }, "running"))
-    assert_helpers.equal(start_stop.sprite, "STOP")
-    assert_helpers.equal(pause_resume.sprite, "PAUSE")
-    assert_helpers.equal(pause_resume.disabled, false)
+    assert_helpers.equal(button.sprite, "PAUSE")
+    assert_helpers.equal(button.tooltip, "Pause the session")
 
     cost_tracker_window.refresh(pages({ "a" }, { "s" }, "paused"))
-    assert_helpers.equal(start_stop.sprite, "STOP")
-    assert_helpers.equal(pause_resume.sprite, "PLAY")
-    assert_helpers.equal(pause_resume.tooltip, "Resume the session")
+    assert_helpers.equal(button.sprite, "PLAY")
     cost_tracker_window.destroy()
 end
 
-function tests.session_buttons_use_the_control_for_the_state()
+function tests.pause_resume_button_uses_the_control_for_the_state()
     local created = install_fakes()
     local used = record_session_controls()
-    cost_tracker_window.open(pages({ "a" }, { "s" }, "stopped"))
-    local start_stop, pause_resume = session_buttons(created[1])
+    cost_tracker_window.open(pages({ "a" }, { "s" }, "paused"))
+    local button = pause_resume_button(created[1])
 
-    start_stop.on_click()
+    button.on_click()
     cost_tracker_window.refresh(pages({ "a" }, { "s" }, "running"))
-    pause_resume.on_click()
-    cost_tracker_window.refresh(pages({ "a" }, { "s" }, "paused"))
-    pause_resume.on_click()
-    start_stop.on_click()
+    button.on_click()
 
-    assert_helpers.same_lines(used, { "start", "pause", "resume", "stop" })
+    assert_helpers.same_lines(used, { "resume", "pause" })
     cost_tracker_window.destroy()
 end
 
-function tests.a_rebuilt_window_shows_the_session_buttons_for_the_state()
+function tests.new_session_asks_for_confirmation_first()
     local created = install_fakes()
-    cost_tracker_window.open(pages({ "a", "b" }, { "s" }, "stopped"))
+    local used = record_session_controls()
+    cost_tracker_window.open(pages({ "a" }))
+
+    session_button(created[1], "New session")()
+    assert_helpers.same_lines(used, {})
+
+    local confirm = created[2]
+    assert_helpers.equal(confirm.kind, "Confirm")
+    assert_helpers.equal(confirm.parent, game_area)
+    confirm.options.onConfirm()
+    assert_helpers.same_lines(used, { "new_session" })
+    cost_tracker_window.destroy()
+end
+
+function tests.past_sessions_button_shows_the_history()
+    local created = install_fakes()
+    local used = record_session_controls()
+    cost_tracker_window.open(pages({ "a" }))
+
+    session_button(created[1], "Past sessions")("extra", "arguments")
+
+    assert_helpers.same_lines(used, { "show_history" })
+    cost_tracker_window.destroy()
+end
+
+function tests.a_rebuilt_window_shows_the_pause_resume_button_for_the_state()
+    local created = install_fakes()
+    cost_tracker_window.open(pages({ "a", "b" }, { "s" }, "paused"))
 
     cost_tracker_window.refresh(pages({ "a" }, { "s" }, "running"))
 
-    local start_stop = session_buttons(created[2])
-    assert_helpers.equal(start_stop.sprite, "STOP")
+    assert_helpers.equal(pause_resume_button(created[2]).sprite, "PAUSE")
     cost_tracker_window.destroy()
 end
 

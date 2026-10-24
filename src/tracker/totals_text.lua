@@ -7,11 +7,13 @@ local totals_text = {}
 -- That can leave a comma at the very front (",123"), which is removed.
 ---@param gp number
 ---@return string
-local function format_gp(gp)
+function totals_text.format_gp(gp)
     local digits = tostring(math.floor(gp))
     local grouped = digits:reverse():gsub("(%d%d%d)", "%1,"):reverse()
     return (grouped:gsub("^,", "")) .. " gp"
 end
+
+local format_gp = totals_text.format_gp
 
 -- e.g. "9,060 gp (no price: Bone rune)". Runes that couldn't be priced at all
 -- are listed so the player knows the real cost is higher.

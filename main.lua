@@ -5,11 +5,15 @@ local equipment = require("src/game/equipment")
 local cast_listener = require("src/game/cast_listener")
 local saved_totals = require("src/game/saved_totals")
 local Session = require("src/game/session")
+local session_history = require("src/game/session_history")
+local game_clock = require("src/game/game_clock")
 local totals_text = require("src/tracker/totals_text")
+local session_text = require("src/tracker/session_text")
 local shop_cost = require("src/tracker/shop_cost")
 local player_settings = require("src/interface/player_settings")
 local content_view = require("src/interface/content_view")
 local cost_tracker_window = require("src/interface/cost_tracker_window")
+local session_history_window = require("src/interface/session_history_window")
 
 ---@type SpellTrackerOptions
 local tracker_options = {
@@ -44,7 +48,7 @@ end
 local function window_pages()
     local shown = player_settings.shown()
     local session_lines = totals_text.lines(shown_totals(session), shown)
-    table.insert(session_lines, 1, "Session " .. session:state())
+    table.insert(session_lines, 1, session_text.status(session:state(), session:minutes()))
     return {
         total = totals_text.lines(shown_totals(tracker), shown),
         session = session_lines,
@@ -83,15 +87,50 @@ local function reset_totals()
     refresh_views()
 end
 
--- Runs one of the session's actions from the window's Session tab, then
--- shows the result.
----@param action fun(session: Session)
----@return fun()
-local function session_control(action)
-    return function()
-        action(session)
-        refresh_views()
+-- The cost of everything cast in the session, as it is shown (so at shop
+-- prices with "Iron btw" on).
+---@return number
+local function session_gp()
+    local gp = 0
+    for _, spell in ipairs(shown_totals(session)) do
+        gp = gp + spell.gp
     end
+    return gp
+end
+
+local function history_lines()
+    return session_text.history_lines(session_history.list())
+end
+
+-- Moves the current session to the history and starts a new one from zero.
+local function new_session()
+    if session:has_anything() then
+        session_history.add({ started_at = session:started_at(), minutes = session:minutes(), gp = session_gp() })
+        session_history_window.refresh(history_lines())
+    end
+    session:start(game_clock.now())
+    refresh_views()
+end
+
+local function pause_session()
+    session:pause()
+    refresh_views()
+end
+
+local function resume_session()
+    session:resume()
+    refresh_views()
+end
+
+local function show_history()
+    session_history_window.open(history_lines())
+end
+
+-- Counts the session's running time, and shows it in the window.
+---@param minutes integer
+local function on_clock(minutes)
+    session:on_clock(minutes)
+    cost_tracker_window.refresh(window_pages())
 end
 
 ---@param spell Spell
@@ -108,12 +147,13 @@ end
 
 cost_tracker_window.set_transparent(player_settings.transparent_window())
 cost_tracker_window.set_session_controls({
-    start = session_control(Session.start),
-    stop = session_control(Session.stop),
-    pause = session_control(Session.pause),
-    resume = session_control(Session.resume),
+    pause = pause_session,
+    resume = resume_session,
+    new_session = new_session,
+    show_history = show_history,
 })
 cast_listener.start(settings.spells, on_cast)
+game_clock.start(on_clock)
 
 content_view.start({
     cost_lines = page_lines,
@@ -126,5 +166,7 @@ content_view.start({
 function PluginShutdown()
     content_view.stop()
     cost_tracker_window.destroy()
+    session_history_window.destroy()
     cast_listener.stop()
+    game_clock.stop()
 end

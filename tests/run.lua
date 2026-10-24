@@ -7,14 +7,18 @@ local test_files = {
     "tests/tracker/spell_tracker_test",
     "tests/tracker/totals_text_test",
     "tests/tracker/shop_cost_test",
+    "tests/tracker/session_text_test",
     "tests/game/prices_test",
     "tests/game/cast_listener_test",
     "tests/game/saved_totals_test",
     "tests/game/session_test",
+    "tests/game/session_history_test",
+    "tests/game/game_clock_test",
     "tests/interface/player_settings_test",
     "tests/interface/text_lines_test",
     "tests/interface/content_view_test",
     "tests/interface/cost_tracker_window_test",
+    "tests/interface/session_history_window_test",
 }
 
 local passed, failed = 0, 0

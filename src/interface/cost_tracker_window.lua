@@ -1,6 +1,7 @@
 -- A separate, movable window with the spell totals on the main game screen,
 -- opened from the plugin's page. It has a tab for the totals so far and one for
--- the current session, with buttons to start, stop, pause and resume it.
+-- the current session, with buttons to pause or resume it, start a new one and
+-- show the past sessions.
 local TextLines = require("src/interface/text_lines")
 
 local cost_tracker_window = {}
@@ -9,14 +10,14 @@ local cost_tracker_window = {}
 ---@class WindowPages
 ---@field total Line[]
 ---@field session Line[]
----@field session_state SessionState Which session buttons to show
+---@field session_state SessionState Which pause/resume button to show
 
 -- What the session buttons ask main.lua to do.
 ---@class SessionControls
----@field start fun()
----@field stop fun()
 ---@field pause fun()
 ---@field resume fun()
+---@field new_session fun() Called when the player confirms "New session"
+---@field show_history fun()
 
 -- The tabs in the order they are shown, with the WindowPages field each one shows.
 local tab_pages = { "total", "session" }
@@ -32,8 +33,7 @@ local transparent = false
 ---@type SessionControls
 local session_controls
 ---@type SessionState
-local session_state = "stopped"
-local start_stop_button
+local session_state = "paused"
 local pause_resume_button
 
 -- The background's colour as 0xRRGGBBAA. White leaves the background image as
@@ -57,61 +57,57 @@ end
 ---@field width number
 ---@field height number
 
--- The session buttons are prettyui's media icons. The first starts a new
--- session or stops the current one. The second pauses or resumes it, and
--- can't be clicked when there is no session.
+-- The pause/resume button is one of prettyui's media icons, showing what
+-- clicking it does.
 ---@class SessionButtonLook
 ---@field sprite string
 ---@field tooltip string
----@field disabled? boolean
 
----@return SessionButtonLook start_stop, SessionButtonLook pause_resume
-local function session_button_looks()
-    local start_stop = { sprite = "STOP", tooltip = "Stop the session" }
-    if session_state == "stopped" then
-        start_stop = { sprite = "PLAY", tooltip = "Start a new session (clears the last one)" }
+---@return SessionButtonLook
+local function pause_resume_look()
+    if session_state == "running" then
+        return { sprite = "PAUSE", tooltip = "Pause the session" }
     end
-    local pause_resume = { sprite = "PAUSE", tooltip = "Pause the session", disabled = session_state == "stopped" }
-    if session_state == "paused" then
-        pause_resume = { sprite = "PLAY", tooltip = "Resume the session" }
-    end
-    return start_stop, pause_resume
+    return { sprite = "PLAY", tooltip = "Resume the session" }
 end
 
----@param button table A prettyui SpriteButton
----@param look SessionButtonLook
-local function apply_look(button, look)
-    button:SetSprite(look.sprite)
-    button:SetTooltip(look.tooltip)
-    button:SetDisabled(look.disabled == true)
-end
-
-local function on_start_stop()
-    if session_state == "stopped" then
-        session_controls.start()
-    else
-        session_controls.stop()
-    end
+local function apply_pause_resume_look()
+    local look = pause_resume_look()
+    pause_resume_button:SetSprite(look.sprite)
+    pause_resume_button:SetTooltip(look.tooltip)
 end
 
 local function on_pause_resume()
     if session_state == "running" then
         session_controls.pause()
-    elseif session_state == "paused" then
+    else
         session_controls.resume()
     end
 end
 
--- Puts the session buttons on one row at the top of the Session tab.
+-- Asks the player to confirm before the session is replaced, since its casts
+-- can't be counted again afterwards. Its time and cost go to the history.
+local function confirm_new_session()
+    prettyui.Confirm.new(game_area(), {
+        title = "New session",
+        body = "This starts a new session from zero. The current one is moved to the past sessions.",
+        confirmLabel = "START",
+        onConfirm = function()
+            session_controls.new_session()
+        end,
+    })
+end
+
+-- Puts the session buttons at the top of the Session tab.
 ---@param page table The Session tab's prettyui page
 local function add_session_buttons(page)
-    local start_stop, pause_resume = session_button_looks()
-    start_stop_button = page:AddSpriteButton(start_stop.sprite, on_start_stop, { tooltip = start_stop.tooltip })
-    pause_resume_button = page:AddSpriteButton(pause_resume.sprite, on_pause_resume, {
-        tooltip = pause_resume.tooltip,
-        disabled = pause_resume.disabled,
-        inline = true,
-    })
+    local look = pause_resume_look()
+    pause_resume_button = page:AddSpriteButton(look.sprite, on_pause_resume, { tooltip = look.tooltip })
+    page:AddSimpleButton("New session", confirm_new_session)
+    -- Wrapped so the extra arguments prettyui passes to button clicks aren't passed on.
+    page:AddSimpleButton("Past sessions", function()
+        session_controls.show_history()
+    end)
 end
 
 ---@param pages WindowPages
@@ -122,9 +118,7 @@ local function set_lines(pages)
     end
     if pages.session_state ~= session_state then
         session_state = pages.session_state
-        local start_stop, pause_resume = session_button_looks()
-        apply_look(start_stop_button, start_stop)
-        apply_look(pause_resume_button, pause_resume)
+        apply_pause_resume_look()
     end
 end
 
