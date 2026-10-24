@@ -62,6 +62,18 @@ function tests.a_rune_no_longer_estimated_is_cleared()
     assert_helpers.equal(#saved_totals.load({ darkness })[1].estimated_items, 0)
 end
 
+function tests.a_prefix_keeps_two_sets_of_totals_apart()
+    local stored = fake_persistent_db.install()
+    saved_totals.save(darkness, darkness_totals())
+
+    saved_totals.save(darkness, darkness_totals({ casts = 1, gp = 10 }), "Session")
+
+    assert_helpers.equal(stored["Session.Darkness.casts"], 1)
+    assert_helpers.equal(stored["Session.Darkness.estimated.Bone rune"], true)
+    assert_helpers.equal(saved_totals.load({ darkness }, "Session")[1].gp, 10)
+    assert_helpers.equal(saved_totals.load({ darkness })[1].gp, 1234.5)
+end
+
 function tests.cast_count_saved_as_float_loads_as_integer()
     local stored = fake_persistent_db.install()
     stored["Darkness.casts"] = 2.0

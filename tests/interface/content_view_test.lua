@@ -46,6 +46,15 @@ local function callbacks(overrides)
     return result
 end
 
+-- The plugin's page has a Costs tab (buttons and cost) and a Settings tab (checkboxes).
+local function costs_tab(view)
+    return view.tabs:GetPage(1)
+end
+
+local function settings_tab(view)
+    return view.tabs:GetPage(2)
+end
+
 local tests = {}
 
 function tests.opening_the_page_shows_the_settings_button_and_cost()
@@ -54,15 +63,18 @@ function tests.opening_the_page_shows_the_settings_button_and_cost()
 
     local view = open_page(subscriptions, created)
 
-    assert_helpers.equal(view.title, "Spell Cost Tracker")
-    assert_helpers.same_lines(view.checkbox_order, {
+    assert_helpers.same_lines(view.tabs.labels, { "Costs", "Settings" })
+    assert_helpers.equal(view.options.scrollable, false)
+    assert_helpers.equal(view.tabs.options.heightAnchor, 1.0)
+    assert_helpers.equal(costs_tab(view).title, "Spell Cost Tracker")
+    assert_helpers.same_lines(settings_tab(view).checkbox_order, {
         "onlyLordOfBonesStalls", "ironBtw", "transparentWindow", "showCasts", "showRunes", "showCost", "showTotalCost",
         "showLordOfBonesCost", "showAnimateDeadCost", "showVampyrismCost", "showPenanceCost", "showDarknessCost",
     })
-    assert_helpers.equal(view.checkboxes.showCasts.text, "Show cast count")
-    assert_helpers.equal(view.checkboxes.showAnimateDeadCost.text, "Show Animate Dead cost")
-    assert_helpers.equal(view.buttons["Open cost tracker"] ~= nil, true)
-    assert_helpers.same_lines(view:visible_lines(), { "Cost: 4,530 gp" })
+    assert_helpers.equal(settings_tab(view).checkboxes.showCasts.text, "Show cast count")
+    assert_helpers.equal(settings_tab(view).checkboxes.showAnimateDeadCost.text, "Show Animate Dead cost")
+    assert_helpers.equal(costs_tab(view).buttons["Open cost tracker"] ~= nil, true)
+    assert_helpers.same_lines(costs_tab(view):visible_lines(), { "Cost: 4,530 gp" })
     content_view.stop()
 end
 
@@ -72,8 +84,8 @@ function tests.only_stalls_checkbox_explains_itself_in_a_tooltip()
 
     local view = open_page(subscriptions, created)
 
-    assert_helpers.equal(type(view.checkboxes.onlyLordOfBonesStalls.tooltip), "string")
-    assert_helpers.equal(view.checkboxes.showCasts.tooltip, nil)
+    assert_helpers.equal(type(settings_tab(view).checkboxes.onlyLordOfBonesStalls.tooltip), "string")
+    assert_helpers.equal(settings_tab(view).checkboxes.showCasts.tooltip, nil)
     content_view.stop()
 end
 
@@ -84,9 +96,9 @@ function tests.checkboxes_show_the_saved_settings()
 
     local view = open_page(subscriptions, created)
 
-    assert_helpers.equal(view.checkboxes.showCasts.selected, true)
-    assert_helpers.equal(view.checkboxes.showRunes.selected, false)
-    assert_helpers.equal(view.checkboxes.ironBtw.selected, false)
+    assert_helpers.equal(settings_tab(view).checkboxes.showCasts.selected, true)
+    assert_helpers.equal(settings_tab(view).checkboxes.showRunes.selected, false)
+    assert_helpers.equal(settings_tab(view).checkboxes.ironBtw.selected, false)
     content_view.stop()
 end
 
@@ -96,7 +108,7 @@ function tests.toggling_a_checkbox_saves_it_and_reports_the_change()
     content_view.start(callbacks({ settings_changed = function() changes = changes + 1 end }))
     local view = open_page(subscriptions, created)
 
-    view.checkboxes.showCost.on_change(nil, nil, nil, false)
+    settings_tab(view).checkboxes.showCost.on_change(nil, nil, nil, false)
 
     assert_helpers.equal(stored.showCost, false)
     assert_helpers.equal(changes, 1)
@@ -109,7 +121,7 @@ function tests.open_cost_tracker_button_opens_the_window()
     content_view.start(callbacks({ open_window = function() opened = true end }))
     local view = open_page(subscriptions, created)
 
-    view.buttons["Open cost tracker"]()
+    costs_tab(view).buttons["Open cost tracker"]()
 
     assert_helpers.equal(opened, true)
     content_view.stop()
@@ -121,7 +133,7 @@ function tests.reset_totals_button_asks_for_confirmation_first()
     content_view.start(callbacks({ reset_totals = function() resets = resets + 1 end }))
     local view = open_page(subscriptions, created)
 
-    view.buttons["Reset totals"]()
+    costs_tab(view).buttons["Reset totals"]()
 
     local dialog = created[#created]
     assert_helpers.equal(dialog.kind, "Confirm")
@@ -144,7 +156,7 @@ function tests.refresh_updates_the_cost_without_rebuilding_the_page()
     content_view.refresh()
 
     assert_helpers.equal(#created, 1)
-    assert_helpers.same_lines(view:visible_lines(), { "Cost: 9,060 gp" })
+    assert_helpers.same_lines(costs_tab(view):visible_lines(), { "Cost: 9,060 gp" })
     content_view.stop()
 end
 

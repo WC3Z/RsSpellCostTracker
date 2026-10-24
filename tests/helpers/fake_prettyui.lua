@@ -1,5 +1,7 @@
--- A fake prettyui global with just enough of SimpleView and Window for the interface tests.
+-- A fake prettyui global with just enough of SimpleView, Window and Tabs for the interface tests.
 local fake_prettyui = {}
+
+local new_container
 
 local function new_text(content)
     return { content = content }
@@ -30,8 +32,44 @@ function Container:AddCheckboxButton(buttons, options)
     table.insert(self.checkbox_order, buttons[1].value)
 end
 
+-- Tabs keep their labels and options, and one container per tab as its page.
+function Container:AddTabs(labels, options)
+    local tabs = { labels = labels, options = options, pages = {}, active = options.activeIndex or 1 }
+    for index in ipairs(labels) do
+        tabs.pages[index] = new_container("TabPage", self, {})
+    end
+    function tabs.GetPage(_, index) return tabs.pages[index] end
+    function tabs.GetActiveIndex() return tabs.active end
+    -- refreshes counts how often prettyui would re-measure the tabs.
+    tabs.refreshes = 0
+    function tabs.SetActive(_, index)
+        tabs.active = index
+        tabs.refreshes = tabs.refreshes + 1
+    end
+    self.tabs = tabs
+    return tabs
+end
+
+-- Sprite buttons are kept in the order they were added, with their current sprite, tooltip and options.
+function Container:AddSpriteButton(sprite, on_click, options)
+    local button = {
+        sprite = sprite, on_click = on_click, options = options or {},
+        tooltip = (options or {}).tooltip, disabled = (options or {}).disabled == true,
+    }
+    function button.SetSprite(self, value) self.sprite = value end
+    function button.SetTooltip(self, value) self.tooltip = value end
+    function button.SetDisabled(self, value) self.disabled = value end
+    table.insert(self.sprite_buttons, button)
+    return button
+end
+
 function Container:AddSimpleButton(label, on_click)
     self.buttons[label] = on_click
+end
+
+function Container:SetSize(width, height)
+    self.root.width = width
+    self.root.height = height
 end
 
 function Container:Show()
@@ -56,20 +94,24 @@ function Container:visible_lines()
     return lines
 end
 
+function new_container(kind, parent, options)
+    return setmetatable({
+        kind = kind, parent = parent, options = options,
+        texts = {}, buttons = {}, sprite_buttons = {}, checkboxes = {}, checkbox_order = {}, shown = 0,
+        content = { kind = "content" },
+        background = { rgba = 0xFFFFFFFF },
+        root = { x = options.x or 80, y = options.y or 80, width = options.width, height = options.height },
+    }, Container)
+end
+
 -- Installs the fake and returns a list that every created view, window and dialog is added to.
+-- Tab pages aren't added; they are on their window's tabs.pages.
 function fake_prettyui.install()
     local created = {}
     local function constructor(kind)
         return {
             new = function(parent, options)
-                options = options or {}
-                local container = setmetatable({
-                    kind = kind, parent = parent, options = options,
-                    texts = {}, buttons = {}, checkboxes = {}, checkbox_order = {}, shown = 0,
-                    content = { kind = "content" },
-                    background = { rgba = 0xFFFFFFFF },
-                    root = { x = options.x or 80, y = options.y or 80, width = options.width, height = options.height },
-                }, Container)
+                local container = new_container(kind, parent, options or {})
                 table.insert(created, container)
                 return container
             end,

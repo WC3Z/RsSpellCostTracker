@@ -1,5 +1,6 @@
--- The plugin's page: the player's settings, buttons to open the cost tracker
--- window and to reset the totals, and the cost of each spell so far.
+-- The plugin's page. The Costs tab has buttons to open the cost tracker window
+-- and to reset the totals, and the cost of each spell so far. The Settings tab
+-- has the player's settings.
 local TextLines = require("src/interface/text_lines")
 local player_settings = require("src/interface/player_settings")
 
@@ -16,9 +17,10 @@ local text
 -- Adds a checkbox for one setting. Each checkbox is added on its own, so when
 -- it changes we know which setting it was. prettyui gives the new on/off state
 -- as the 4th argument.
+---@param page table The prettyui tab page to add it to
 ---@param option PlayerSetting
-local function add_checkbox(option)
-    view:AddCheckboxButton({
+local function add_checkbox(page, option)
+    page:AddCheckboxButton({
         {
             text = option.label,
             value = option.db_key,
@@ -38,7 +40,7 @@ end
 local function confirm_reset(parent)
     prettyui.Confirm.new(parent, {
         title = "Reset totals",
-        body = "This sets the casts and cost of every spell back to zero. This can't be undone.",
+        body = "This sets the casts and cost of every spell back to zero, in the session too. This can't be undone.",
         confirmLabel = "RESET",
         onConfirm = function()
             on_reset_totals()
@@ -68,27 +70,35 @@ function content_view.start(callbacks)
         view = prettyui.SimpleView.new(parent, {
             width = parent.width,
             height = parent.height,
+            -- The tabs scroll instead, see below.
+            scrollable = false,
         })
+        -- prettyui tabs keep a fixed height and never grow to fit what is on
+        -- them, so they are made to fill the page, and each tab scrolls.
+        local tabs = view:AddTabs({ "Costs", "Settings" }, { y = 0, height = 0, heightAnchor = 1.0 })
 
-        view:AddTitle("Spell Cost Tracker")
-        add_checkbox(player_settings.only_stalls_option)
-        add_checkbox(player_settings.iron_btw_option)
-        add_checkbox(player_settings.transparent_window_option)
-        for _, option in ipairs(player_settings.options) do
-            add_checkbox(option)
-        end
-        for _, option in ipairs(player_settings.spell_options) do
-            add_checkbox(option)
-        end
+        local costs = tabs:GetPage(1)
+        costs:AddTitle("Spell Cost Tracker")
         -- Wrapped so the extra arguments prettyui passes to button clicks aren't passed on.
-        view:AddSimpleButton("Open cost tracker", function()
+        costs:AddSimpleButton("Open cost tracker", function()
             on_open_window()
         end)
-        view:AddSimpleButton("Reset totals", function()
+        costs:AddSimpleButton("Reset totals", function()
             confirm_reset(parent)
         end)
-        text = TextLines.new(view)
+        text = TextLines.new(costs)
         text:set(get_cost_lines())
+
+        local settings_page = tabs:GetPage(2)
+        add_checkbox(settings_page, player_settings.only_stalls_option)
+        add_checkbox(settings_page, player_settings.iron_btw_option)
+        add_checkbox(settings_page, player_settings.transparent_window_option)
+        for _, option in ipairs(player_settings.options) do
+            add_checkbox(settings_page, option)
+        end
+        for _, option in ipairs(player_settings.spell_options) do
+            add_checkbox(settings_page, option)
+        end
     end)
 end
 

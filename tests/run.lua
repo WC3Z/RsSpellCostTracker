@@ -10,6 +10,7 @@ local test_files = {
     "tests/game/prices_test",
     "tests/game/cast_listener_test",
     "tests/game/saved_totals_test",
+    "tests/game/session_test",
     "tests/interface/player_settings_test",
     "tests/interface/text_lines_test",
     "tests/interface/content_view_test",

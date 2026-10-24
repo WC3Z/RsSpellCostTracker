@@ -25,8 +25,9 @@ Animate Dead, Vampyrism, Penance and Darkness last up to an hour. A multi-cast a
 - Prices each cast when it happens, using the average of the latest high and low Grand Exchange price. If a price isn't available, a fallback price from `src/config.lua` is used, and that part of the cost is shown as "Estimated" under the total (hover it to see which runes).
 - With **Iron btw** on, the cost is shown at rune shop prices instead (see below).
 - Keeps the totals when the plugin or the game is restarted. **Reset totals** on the plugin's page sets them back to zero, after asking you to confirm.
-- A movable window with the totals, opened from the plugin's page.
-- Settings on the plugin's page:
+- A movable window with the totals, opened from the plugin's page. It has a **Total** tab and a **Session** tab.
+- Sessions, controlled with the buttons on the window's Session tab: ▶ starts a new session (clearing the last one) and ■ stops it. While a session runs, ⏸ pauses it and ▶ resumes it. Casts are counted in the session only while it runs, and always in the totals. A stopped session's totals stay until the next one starts. The session, paused or not, carries on after the plugin or the game is restarted. **Reset totals** clears the session too.
+- The plugin's page has a **Costs** tab (open the window, reset totals, cost so far) and a **Settings** tab:
   - **Only track Lord of Bones stalls**: only counts Lord of Bones casts made without Necromancy gear on.
   - **Iron btw** (off by default): shows the cost at rune shop prices instead of Grand Exchange prices.
   - **Transparent window** (off by default): makes the window's background see-through.
