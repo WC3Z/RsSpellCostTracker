@@ -23,7 +23,15 @@ local function game_area()
     return ui.Interfaces:GetComponent(id.Component.TOPLEVEL_V2__GAME_AREA)
 end
 
--- bounds: optional position and size; without it the window opens in prettyui's default spot.
+-- Where the window is and how big it is.
+---@class WindowBounds
+---@field x? number
+---@field y? number
+---@field width number
+---@field height number
+
+---@param lines Line[]
+---@param bounds? WindowBounds Without it the window opens in prettyui's default spot
 local function create(lines, bounds)
     bounds = bounds or { width = 260, height = 160 }
     window = prettyui.Window.new(game_area(), {
@@ -58,6 +66,7 @@ end
 -- can't be removed. If we just blanked the rows we no longer need, the window
 -- would keep a scrollbar for the empty space. So when there are fewer lines
 -- than before, the window is rebuilt in the same place and at the same size.
+---@param lines Line[]
 local function show_lines(lines)
     if #lines < line_count then
         local root = window.root
@@ -71,6 +80,7 @@ local function show_lines(lines)
 end
 
 -- Opens the window, or brings it to the front if it is already open.
+---@param lines Line[]
 function cost_tracker_window.open(lines)
     if window then
         window:Show()
@@ -81,6 +91,7 @@ function cost_tracker_window.open(lines)
 end
 
 -- Shows the latest lines if the window is open.
+---@param lines Line[]
 function cost_tracker_window.refresh(lines)
     if window then
         show_lines(lines)
@@ -89,6 +100,7 @@ end
 
 -- Makes the window's background see-through or solid, now and for windows
 -- opened later.
+---@param on boolean
 function cost_tracker_window.set_transparent(on)
     transparent = on
     if window then

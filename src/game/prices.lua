@@ -6,6 +6,8 @@ local prices = {}
 -- The item's current Grand Exchange price: the middle of its latest high and
 -- low price. Returns nil when there is no price, e.g. because gepl hasn't
 -- finished loading prices yet, doesn't know the item, or isn't installed.
+---@param item_id integer
+---@return number?
 function prices.average_price(item_id)
     if gepl == nil or not gepl.isReady("latest") then
         return nil
@@ -28,6 +30,8 @@ end
 -- What a shop sells the item for when it is fully stocked, e.g. 550 gp for a
 -- Blood rune at Baba Yaga. This is the price the game lists for the item.
 -- Returns nil when the game doesn't give us a price.
+---@param config_name string The game's internal name for the item, e.g. "BLOODRUNE"
+---@return number?
 function prices.store_price(config_name)
     -- `config` here is the game's own lookup table, not this plugin's src/config.lua.
     local ok, cost = pcall(function()
@@ -41,7 +45,9 @@ function prices.store_price(config_name)
 end
 
 -- Returns a function that gives the Grand Exchange price of a rune by its
--- name, e.g. "Bone rune". item_ids maps each name to the game's item id.
+-- name, e.g. "Bone rune".
+---@param item_ids table<RuneName, integer> The game's item id for each rune
+---@return PriceLookup
 function prices.by_item_name(item_ids)
     return function(item_name)
         local item_id = item_ids[item_name]
@@ -53,9 +59,9 @@ function prices.by_item_name(item_ids)
 end
 
 -- Returns a function that gives the shop price of a rune by its name.
--- item_config_names maps each name to the game's internal name for it.
--- store_price_multipliers (optional) lists runes that shops sell for more
--- than the game's listed price, e.g. { ["Bone rune"] = 10 } for 10 times.
+---@param item_config_names table<RuneName, string> The game's internal name for each rune
+---@param store_price_multipliers? table<RuneName, number> Runes that shops sell for more than the game's listed price, e.g. { ["Bone rune"] = 10 } for 10 times
+---@return PriceLookup
 function prices.store_price_by_item_name(item_config_names, store_price_multipliers)
     store_price_multipliers = store_price_multipliers or {}
     return function(item_name)

@@ -4,14 +4,24 @@ local settings = require("src/config")
 
 local player_settings = {}
 
--- Each setting has:
--- name:           which part of the cost tracker window it shows or hides
--- db_key:         the name it is saved under
--- label:          the checkbox text
--- tooltip:        optional text shown when hovering over the checkbox
--- off_by_default: optional; true if the setting starts off instead of on
+-- A setting the player can turn on or off with a checkbox.
+---@class PlayerSetting
+---@field name? string Which part of the cost tracker window it shows or hides
+---@field db_key string The name it is saved under
+---@field label string The checkbox text
+---@field tooltip? string Text shown when hovering over the checkbox
+---@field off_by_default? boolean True if the setting starts off instead of on
+
+-- Which parts of the cost tracker window the player wants to see.
+---@class ShownParts
+---@field casts boolean How many times each spell was cast
+---@field runes boolean How many of each rune each spell used
+---@field cost boolean Each spell's own cost
+---@field total boolean All shown spells' cost added up
+---@field spells? table<string, boolean> Whether each spell is shown, by Spell.key; spells not listed are shown
 
 -- Whether Lord of Bones casts made while wearing Necromancy gear are ignored.
+---@type PlayerSetting
 player_settings.only_stalls_option = {
     db_key = "onlyLordOfBonesStalls",
     label = "Only track Lord of Bones stalls",
@@ -20,6 +30,7 @@ player_settings.only_stalls_option = {
 }
 
 -- Whether runes are priced at what shops sell them for instead of GE prices.
+---@type PlayerSetting
 player_settings.iron_btw_option = {
     db_key = "ironBtw",
     label = "Iron Btw",
@@ -28,6 +39,7 @@ player_settings.iron_btw_option = {
 }
 
 -- Whether the cost tracker window's background is see-through.
+---@type PlayerSetting
 player_settings.transparent_window_option = {
     db_key = "transparentWindow",
     label = "Transparent window",
@@ -35,6 +47,7 @@ player_settings.transparent_window_option = {
 }
 
 -- What the cost tracker window shows, in the order the checkboxes are shown.
+---@type PlayerSetting[]
 player_settings.options = {
     { name = "casts", db_key = "showCasts", label = "Show cast count" },
     { name = "runes", db_key = "showRunes", label = "Show rune count" },
@@ -44,6 +57,7 @@ player_settings.options = {
 
 -- One option per tracked spell, in the order of settings.spells, e.g.
 -- { name = "Darkness", db_key = "showDarknessCost", label = "Show Darkness cost" }.
+---@type PlayerSetting[]
 player_settings.spell_options = {}
 for _, spell in ipairs(settings.spells) do
     table.insert(player_settings.spell_options, {
@@ -54,6 +68,8 @@ for _, spell in ipairs(settings.spells) do
 end
 
 -- A setting the player hasn't changed is on, unless it is off_by_default.
+---@param option PlayerSetting
+---@return boolean
 function player_settings.is_on(option)
     local saved = PersistentDB:GetBool(option.db_key)
     if saved == nil then
@@ -62,24 +78,30 @@ function player_settings.is_on(option)
     return saved
 end
 
+---@param option PlayerSetting
+---@param on boolean
 function player_settings.set(option, on)
     PersistentDB:SetBool(option.db_key, on)
 end
 
+---@return boolean
 function player_settings.only_stalls()
     return player_settings.is_on(player_settings.only_stalls_option)
 end
 
+---@return boolean
 function player_settings.iron_btw()
     return player_settings.is_on(player_settings.iron_btw_option)
 end
 
+---@return boolean
 function player_settings.transparent_window()
     return player_settings.is_on(player_settings.transparent_window_option)
 end
 
 -- Which parts the player wants to see in the cost tracker window, e.g.
 -- { casts = true, runes = false, cost = true, total = true, spells = { Darkness = true, Penance = false } }.
+---@return ShownParts
 function player_settings.shown()
     local shown = { spells = {} }
     for _, option in ipairs(player_settings.options) do

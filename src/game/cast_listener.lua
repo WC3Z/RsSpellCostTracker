@@ -9,6 +9,8 @@ local subscription_name = "spell-cost-tracker-spell-cast"
 -- casts is the number of casts, which is more than 1 for a multi-cast.
 -- The game tells us about every value that changes (VarTransmit), and
 -- CastDetection works out which of those changes mean a spell was cast.
+---@param spells Spell[]
+---@param on_cast fun(spell: Spell, casts: integer)
 function cast_listener.start(spells, on_cast)
     local detection = CastDetection.new(spells)
     Event.VarTransmit.Subscribe(subscription_name, function(event)

@@ -3,9 +3,51 @@
 -- stored, since it can be worked out from the number of casts.
 local necro_gear = require("src/tracker/necro_gear")
 
+-- Gives the price of a rune, or nil when it isn't known.
+---@alias PriceLookup fun(item_name: RuneName): number?
+
+-- A spell's totals as they are saved between restarts.
+---@class SavedTotals
+---@field key string Which spell, see Spell.key
+---@field casts integer How many times it was cast
+---@field gp number What those casts cost
+---@field estimated_gp number The part of gp that was priced with rough prices
+---@field estimated_items RuneName[] Runes priced with a rough price at least once
+---@field unpriced_items RuneName[] Runes with no price at all at least once; these are missing from gp
+
+-- A spell's totals as shown to the player: the saved totals plus its name and runes used.
+---@class SpellTotals: SavedTotals
+---@field name string
+---@field runes_used table<RuneName, integer> How many of each rune the casts used
+
+-- The totals SpellTracker keeps while running. Runes are kept as sets
+-- ({ ["Bone rune"] = true }) so adding one twice doesn't list it twice.
+---@class RunningTotals
+---@field casts integer
+---@field gp number
+---@field estimated_gp number
+---@field estimated_items table<RuneName, true>
+---@field unpriced_items table<RuneName, true>
+
+---@class SpellTrackerOptions
+---@field spells Spell[] The spells to track
+---@field necro_gear table<integer, true> Item ids that count as Necromancy gear
+---@field get_price PriceLookup
+---@field fallback_prices? table<RuneName, number> Rough prices, used when there's no price
+---@field only_stalls? fun(): boolean True when only Lord of Bones stalls should be counted
+
+---@class SpellTracker
+---@field spells Spell[]
+---@field necro_gear table<integer, true>
+---@field get_price PriceLookup
+---@field fallback_prices table<RuneName, number>
+---@field only_stalls fun(): boolean
+---@field totals_by_key table<string, RunningTotals> Each spell's totals, by Spell.key
 local SpellTracker = {}
 SpellTracker.__index = SpellTracker
 
+---@param list RuneName[]
+---@return table<RuneName, true>
 local function as_set(list)
     local set = {}
     for _, item in ipairs(list) do
@@ -14,6 +56,8 @@ local function as_set(list)
     return set
 end
 
+---@param source table<RuneName, true>
+---@return RuneName[]
 local function sorted_keys(source)
     local keys = {}
     for key in pairs(source) do
@@ -23,13 +67,8 @@ local function sorted_keys(source)
     return keys
 end
 
--- options:
---   spells:          the spells to track, as in config.lua
---   necro_gear:      item ids that count as Necromancy gear
---   get_price:       gives the price of a rune by its name, or nil if unknown
---   fallback_prices: optional rough prices by rune name, used when there's no price
---   only_stalls:     optional; returns true when the player only wants Lord of
---                    Bones stalls counted (casts without Necromancy gear on)
+---@param options SpellTrackerOptions
+---@return SpellTracker
 function SpellTracker.new(options)
     local self = setmetatable({}, SpellTracker)
     self.spells = options.spells
@@ -56,6 +95,7 @@ end
 
 -- Picks up from earlier totals, e.g. the ones saved before the plugin was
 -- restarted. Saved spells that aren't tracked any more are ignored.
+---@param saved SavedTotals[]
 function SpellTracker:restore(saved)
     for _, spell in ipairs(saved) do
         local totals = self.totals_by_key[spell.key]
@@ -74,6 +114,9 @@ end
 -- moment they happen, so later Grand Exchange price changes don't change what
 -- earlier casts cost. If there is no price, the rough price from config.lua is
 -- used, and the rune and its cost are marked as estimated.
+---@param totals RunningTotals
+---@param item_name RuneName
+---@param quantity integer
 function SpellTracker:add_cost(totals, item_name, quantity)
     local price = self.get_price(item_name)
     if price == nil then
@@ -97,9 +140,11 @@ end
 -- it is part of normal Necromancy combat. Cast without it, the player is just
 -- using it to stall. With only_stalls on, only the stalls are counted.
 --
--- worn_equipment: the item ids the player is wearing
--- casts: how many casts to count, e.g. 5 for a multi-cast (1 if left out)
 -- Returns the spell if the cast was counted, or nil if it was ignored.
+---@param spell Spell
+---@param worn_equipment table<integer, integer> Item id by equipment slot
+---@param casts? integer How many casts to count, e.g. 5 for a multi-cast (1 if left out)
+---@return Spell?
 function SpellTracker:on_cast(spell, worn_equipment, casts)
     casts = casts or 1
     if spell.can_stall and self.only_stalls() and necro_gear.is_wearing(worn_equipment, self.necro_gear) then
@@ -115,6 +160,9 @@ function SpellTracker:on_cast(spell, worn_equipment, casts)
 end
 
 -- How many of each rune the given number of casts used.
+---@param spell Spell
+---@param casts integer
+---@return table<RuneName, integer>
 local function runes_used(spell, casts)
     local used = {}
     if casts > 0 then
@@ -125,7 +173,8 @@ local function runes_used(spell, casts)
     return used
 end
 
--- The totals of one spell. See totals() for what they contain.
+---@param spell Spell
+---@return SpellTotals
 function SpellTracker:spell_totals(spell)
     local totals = self.totals_by_key[spell.key]
     return {
@@ -140,15 +189,8 @@ function SpellTracker:spell_totals(spell)
     }
 end
 
--- The totals of every spell, in the same order as config.lua. Each has:
---   key, name:       which spell it is
---   casts:           how many times it was cast
---   runes_used:      how many of each rune those casts used
---   gp:              what they cost
---   estimated_gp:    the part of gp that was priced with rough prices
---   estimated_items: runes that were priced with a rough price at least once
---   unpriced_items:  runes that had no price at all at least once; these
---                    are missing from gp, so the real cost is higher
+-- The totals of every spell, in the same order as config.lua.
+---@return SpellTotals[]
 function SpellTracker:totals()
     local result = {}
     for _, spell in ipairs(self.spells) do

@@ -1,6 +1,33 @@
 -- The spells whose cost is tracked, what each cast costs, and what counts as
 -- Necromancy gear for Lord of Bones stalls.
-return {
+
+---@alias RuneName string The rune's name as the player sees it, e.g. "Bone rune"
+
+---@class Spell
+---@field key string Short name used to save its settings and totals, e.g. "LordOfBones"
+---@field name string Name shown to the player, e.g. "Lord of Bones"
+---@field ability_id? integer Only for spells the game reports directly
+---@field timer? SpellTimer Only for spells detected by their time left
+---@field runes table<RuneName, integer> How many of each rune one cast uses
+---@field can_stall? boolean Only Lord of Bones
+
+---@class SpellTimer
+---@field var string The game value that holds the time left
+---@field mask? integer Picks this spell's part out of the game value
+---@field shift? integer Picks this spell's part out of the game value
+---@field per_cast integer How much one cast adds to the time left
+---@field cast_tick_var? string Only Darkness: the game value holding when it was cast
+
+---@class Settings
+---@field spells Spell[]
+---@field item_ids table<RuneName, integer>
+---@field item_config_names table<RuneName, string>
+---@field store_price_multipliers table<RuneName, number>
+---@field fallback_prices table<RuneName, number>
+---@field necro_item_ids table<integer, true>
+
+---@type Settings
+local settings = {
     -- The spells whose cost is tracked, in the order they are shown.
     --
     -- key:        a short name for the spell, used to save its settings and totals
@@ -182,3 +209,5 @@ return {
         [55485] = true, -- NECRO_RASIAL_LANTERN_T95_AUGMENTED
     },
 }
+
+return settings

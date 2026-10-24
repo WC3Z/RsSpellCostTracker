@@ -19,15 +19,24 @@
 -- cast, so it is counted as 1. The game doesn't allow a multi-cast when the
 -- spell is nearly full (e.g. at 59 minutes), so this only happens when
 -- there is room for at least one more cast.
+---@class CastDetection
+---@field spells Spell[]
+---@field cast_ticks table<string, integer> When each cast_tick_var spell was last cast, by game value name
 local CastDetection = {}
 CastDetection.__index = CastDetection
+
+---@class SpellCast
+---@field spell Spell
+---@field casts integer 5 for a multi-cast, otherwise usually 1
 
 local just_used_ability_var = "COMBATV2_JUST_USED_ABILITY"
 
 -- Picks this spell's time left out of a game value. For some spells the game
 -- packs several things into one number, and mask/shift pick out our part.
 -- Darkness has a value of its own, so it is used as is.
--- timer: as in config.lua
+---@param var_value integer
+---@param timer SpellTimer
+---@return integer
 local function timer_value(var_value, timer)
     if timer.mask == nil then
         return var_value
@@ -43,6 +52,9 @@ local multi_cast_casts = 5
 -- The timer may have counted down a little at the same moment, so this rounds
 -- to the nearest cast. Any increase counts as at least one cast, since topping
 -- up a spell that is nearly full adds less than 12 minutes.
+---@param rise integer
+---@param per_cast integer
+---@return integer
 local function casts_from_timer_rise(rise, per_cast)
     return math.max(1, math.floor(rise / per_cast + 0.5))
 end
@@ -50,11 +62,15 @@ end
 -- Whether the spell now has about an hour left, as it does after a
 -- multi-cast. A little under an hour still counts, since the timer may have
 -- already counted down a bit.
+---@param time_left integer?
+---@param per_cast integer
+---@return boolean
 local function is_full(time_left, per_cast)
     return time_left ~= nil and time_left >= multi_cast_casts * per_cast - per_cast / 2
 end
 
--- spells: list of spells, as in config.lua
+---@param spells Spell[]
+---@return CastDetection
 function CastDetection.new(spells)
     local self = setmetatable({}, CastDetection)
     self.spells = spells
@@ -71,6 +87,9 @@ end
 -- stores the moment it runs out rather than the time left. If Darkness wasn't
 -- active, the old value is 0 or a moment in the past, so we measure from
 -- the moment it was cast instead.
+---@param timer SpellTimer
+---@param old_timer integer
+---@return integer?
 function CastDetection:timer_start(timer, old_timer)
     if timer.cast_tick_var == nil then
         return old_timer
@@ -88,6 +107,9 @@ end
 -- How long the spell has left after this cast, or nil when we can't tell.
 -- For most spells that is the timer itself. For Darkness it is the time
 -- between when it was cast and when it runs out.
+---@param timer SpellTimer
+---@param new_timer integer
+---@return integer?
 function CastDetection:time_left(timer, new_timer)
     if timer.cast_tick_var == nil then
         return new_timer
@@ -100,6 +122,11 @@ function CastDetection:time_left(timer, new_timer)
 end
 
 -- Returns how many times the spell was cast in this change, 0 if it wasn't.
+---@param spell Spell
+---@param var_name string
+---@param old_value integer?
+---@param new_value integer?
+---@return integer
 function CastDetection:times_cast(spell, var_name, old_value, new_value)
     if var_name == just_used_ability_var then
         if spell.ability_id ~= nil and spell.ability_id == new_value then
@@ -130,6 +157,8 @@ end
 
 -- Keeps track of when Darkness-like spells were last cast. The game updates
 -- this just before it updates the spell's timer.
+---@param var_name string
+---@param new_value integer
 function CastDetection:remember_cast_tick(var_name, new_value)
     for _, spell in ipairs(self.spells) do
         if spell.timer ~= nil and spell.timer.cast_tick_var == var_name then
@@ -138,9 +167,12 @@ function CastDetection:remember_cast_tick(var_name, new_value)
     end
 end
 
--- Called every time the game changes one of its values. Returns a list of
--- { spell, casts } for each spell that this change shows was cast. Usually
--- the list is empty or has one entry.
+-- Called every time the game changes one of its values. Returns each spell
+-- that this change shows was cast. Usually the list is empty or has one entry.
+---@param var_name string
+---@param old_value integer?
+---@param new_value integer?
+---@return SpellCast[]
 function CastDetection:cast_spells(var_name, old_value, new_value)
     self:remember_cast_tick(var_name, new_value)
 

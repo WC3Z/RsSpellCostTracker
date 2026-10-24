@@ -8,17 +8,24 @@
 -- they can be worked out from the number of casts.
 local saved_totals = {}
 
+---@param spell_key string
+---@param ... string
+---@return string
 local function key(spell_key, ...)
     return table.concat({ spell_key, ... }, ".")
 end
 
 -- Saved numbers come back as decimals, which would show up as "2.0 casts".
 -- A cast count is always a whole number, so it is turned back into one.
+---@param db_key string
+---@return integer
 local function load_count(db_key)
     local value = PersistentDB:Get(db_key) or 0
     return math.floor(value + 0.5)
 end
 
+---@param list RuneName[]
+---@return table<RuneName, true>
 local function as_set(list)
     local set = {}
     for _, item in ipairs(list) do
@@ -28,8 +35,8 @@ local function as_set(list)
 end
 
 -- Saves one spell's totals.
--- spell: the spell, as in config.lua
--- totals: the spell's totals, as SpellTracker gives them
+---@param spell Spell
+---@param totals SavedTotals
 function saved_totals.save(spell, totals)
     local estimated = as_set(totals.estimated_items)
     local unpriced = as_set(totals.unpriced_items)
@@ -45,6 +52,8 @@ end
 
 -- Loads the saved totals of each spell, ready to hand to SpellTracker:restore.
 -- Spells that were never saved start at zero.
+---@param spells Spell[]
+---@return SavedTotals[]
 function saved_totals.load(spells)
     local result = {}
     for _, spell in ipairs(spells) do

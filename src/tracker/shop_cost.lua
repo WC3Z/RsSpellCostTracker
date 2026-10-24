@@ -3,6 +3,8 @@
 -- Shop prices never change, so every cast, old or new, costs the same.
 local shop_cost = {}
 
+---@param source table<RuneName, true>
+---@return RuneName[]
 local function sorted_keys(source)
     local keys = {}
     for key in pairs(source) do
@@ -15,6 +17,10 @@ end
 -- Returns a copy of one spell's totals with the cost worked out at shop
 -- prices. If a rune has no shop price, its rough price from config.lua is
 -- used and the rune is marked as estimated, just like for GE prices.
+---@param spell SpellTotals
+---@param get_store_price PriceLookup
+---@param fallback_prices table<RuneName, number>
+---@return SpellTotals
 local function shop_priced(spell, get_store_price, fallback_prices)
     local gp = 0
     local estimated_gp = 0
@@ -48,9 +54,10 @@ local function shop_priced(spell, get_store_price, fallback_prices)
     return priced
 end
 
--- spell_totals: every spell's totals, as SpellTracker:totals() gives them
--- get_store_price: gives the shop price of a rune by its name, or nil
--- fallback_prices: optional rough prices by rune name, for runes with no shop price
+---@param spell_totals SpellTotals[] Every spell's totals, as SpellTracker:totals() gives them
+---@param get_store_price PriceLookup Gives the shop price of a rune
+---@param fallback_prices? table<RuneName, number> Rough prices for runes with no shop price
+---@return SpellTotals[]
 function shop_cost.reprice(spell_totals, get_store_price, fallback_prices)
     local result = {}
     for _, spell in ipairs(spell_totals) do

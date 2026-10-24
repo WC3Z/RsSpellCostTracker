@@ -16,6 +16,7 @@ local text
 -- Adds a checkbox for one setting. Each checkbox is added on its own, so when
 -- it changes we know which setting it was. prettyui gives the new on/off state
 -- as the 4th argument.
+---@param option PlayerSetting
 local function add_checkbox(option)
     view:AddCheckboxButton({
         {
@@ -45,11 +46,15 @@ local function confirm_reset(parent)
     })
 end
 
--- Sets up the page. callbacks:
---   cost_lines():       gives the cost text to show on the page
---   settings_changed(): called when the player ticks or unticks a checkbox
---   open_window():      called when the player clicks "Open cost tracker"
---   reset_totals():     called when the player confirms "Reset totals"
+-- What the page asks main.lua to do.
+---@class ContentViewCallbacks
+---@field cost_lines fun(): Line[] Gives the cost text to show on the page
+---@field settings_changed fun() Called when the player ticks or unticks a checkbox
+---@field open_window fun() Called when the player clicks "Open cost tracker"
+---@field reset_totals fun() Called when the player confirms "Reset totals"
+
+-- Sets up the page.
+---@param callbacks ContentViewCallbacks
 function content_view.start(callbacks)
     get_cost_lines = callbacks.cost_lines
     on_settings_changed = callbacks.settings_changed

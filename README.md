@@ -80,3 +80,19 @@ src/tracker/       cast detection, totals, shop pricing and their text (plain Lu
 src/interface/     the plugin's page, the window and the settings
 tests/             tests, mirroring src/
 ```
+
+## Types
+
+Lua has no types of its own, so the code describes them in `---@` comments,
+which editors with the Lua Language Server (or EmmyLua) understand. For example
+`---@param spells Spell[]` means `spells` is a list of `Spell`, and hovering over
+`Spell` shows its fields. The shared types are defined where they belong:
+
+- `Spell`, `SpellTimer`, `RuneName`: `src/config.lua`
+- `SavedTotals`, `SpellTotals`, `PriceLookup`: `src/tracker/spell_tracker.lua`
+- `SpellCast`: `src/tracker/cast_detection.lua`
+- `PlayerSetting`, `ShownParts`: `src/interface/player_settings.lua`
+- `Line`: `src/interface/text_lines.lua`
+
+A `?` means the value can be missing (`nil`), and `table<RuneName, integer>`
+is a table from rune name to a number, e.g. `{ ["Bone rune"] = 6 }`.

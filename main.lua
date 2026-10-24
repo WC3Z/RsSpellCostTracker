@@ -64,6 +64,8 @@ local function reset_totals()
     refresh_views()
 end
 
+---@param spell Spell
+---@param casts integer
 local function on_cast(spell, casts)
     if tracker:on_cast(spell, equipment.worn_item_ids(), casts) then
         saved_totals.save(spell, tracker:spell_totals(spell))
