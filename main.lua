@@ -152,7 +152,7 @@ cost_tracker_window.set_session_controls({
     new_session = new_session,
     show_history = show_history,
 })
-cast_listener.start(settings.spells, on_cast)
+cast_listener.start(settings.spells, settings.rune_count_var_ids, on_cast)
 game_clock.start(on_clock)
 
 content_view.start({

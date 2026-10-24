@@ -1,7 +1,7 @@
 -- Turns session times and the session history into text.
 --
 -- Times come from the game clock, which counts minutes. They are taken to be
--- minutes since 1 January 1970 in game time (UTC), like Unix time.
+-- minutes since 1 January 1970 in game time (UTC), like Unix time (checked in game).
 local totals_text = require("src/tracker/totals_text")
 
 local session_text = {}

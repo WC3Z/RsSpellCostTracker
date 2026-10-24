@@ -22,6 +22,7 @@ Animate Dead, Vampyrism, Penance and Darkness last up to an hour. A multi-cast a
 ## Features
 
 - Counts casts, runes used and their cost for each spell, including multi-casts of Animate Dead, Vampyrism, Penance and Darkness (see Known limitations).
+- Animate Dead, Vampyrism and Penance are counted by the soul runes they use (backpack and rune pouches together), so quick casts that land in the same moment and multi-casts are counted correctly. If no soul runes are used (e.g. something saved them), the cast is counted from the spell's timer instead.
 - Prices each cast when it happens, using the average of the latest high and low Grand Exchange price. If a price isn't available, a fallback price from `src/config.lua` is used, and that part of the cost is shown as "Estimated" under the total (hover it to see which runes).
 - With **Iron btw** on, the cost is shown at rune shop prices instead (see below).
 - Keeps the totals when the plugin or the game is restarted. **Reset totals** on the plugin's page sets them back to zero, after asking you to confirm.
@@ -48,7 +49,7 @@ The Grand Exchange cost is always tracked and saved. Shop prices don't change, s
 
 ## Known limitations
 
-- **Multi-casts with time left on the timer are undercounted.** A multi-cast always uses the runes of 5 casts, but the casts that don't fit in the hour leave no trace in the game: the timer only goes up by the casts that fit, and only those give XP. With 48 minutes left, for example, a multi-cast uses the runes of 5 casts but is counted as 1. A multi-cast from an empty timer is counted correctly.
+- **Darkness multi-casts with time left on the timer are undercounted.** A multi-cast always uses the runes of 5 casts, but the casts that don't fit in the hour leave no trace in the game: the timer only goes up by the casts that fit, and only those give XP. With 48 minutes left, for example, a multi-cast uses the runes of 5 casts but is counted as 1. A multi-cast from an empty timer is counted correctly. The other timed spells are counted by their soul runes instead, but the game has no rune count for Necromancy runes.
 
 ## Dependencies
 
@@ -78,7 +79,7 @@ lua tests/run.lua
 main.lua           wires everything together
 src/config.lua     spells, rune costs, item ids, shop price multipliers, fallback prices, Necromancy gear
 src/game/          code that talks to the game and gepl
-src/tracker/       cast detection, totals, shop pricing and their text (plain Lua, no game calls)
+src/tracker/       cast detection (timers and rune counts), totals, shop pricing and their text (plain Lua, no game calls)
 src/interface/     the plugin's page, the window and the settings
 tests/             tests, mirroring src/
 ```
@@ -93,6 +94,7 @@ which editors with the Lua Language Server (or EmmyLua) understand. For example
 - `Spell`, `SpellTimer`, `RuneName`: `src/config.lua`
 - `SavedTotals`, `SpellTotals`, `PriceLookup`: `src/tracker/spell_tracker.lua`
 - `SpellCast`: `src/tracker/cast_detection.lua`
+- `PendingCast`: `src/tracker/rune_count_casts.lua`
 - `PlayerSetting`, `ShownParts`: `src/interface/player_settings.lua`
 - `Line`: `src/interface/text_lines.lua`
 

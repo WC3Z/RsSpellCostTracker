@@ -9,6 +9,7 @@
 ---@field ability_id? integer Only for spells the game reports directly
 ---@field timer? SpellTimer Only for spells detected by their time left
 ---@field runes table<RuneName, integer> How many of each rune one cast uses
+---@field counted_by_rune? RuneName Count casts by how many of this rune were used, see rune_count_casts.lua
 ---@field can_stall? boolean Only Lord of Bones
 
 ---@class SpellTimer
@@ -25,6 +26,7 @@
 ---@field store_price_multipliers table<RuneName, number>
 ---@field fallback_prices table<RuneName, number>
 ---@field necro_item_ids table<integer, true>
+---@field rune_count_var_ids table<RuneName, integer>
 
 ---@type Settings
 local settings = {
@@ -47,6 +49,9 @@ local settings = {
     --                            need the moment it was cast, which the game keeps
     --                            in this value.
     -- runes:      the runes one cast uses
+    -- counted_by_rune: count casts by how many of this rune were used, instead
+    --             of only by the timer, which can't tell quick casts apart from
+    --             a multi-cast. The rune needs an entry in rune_count_var_ids.
     -- can_stall:  Lord of Bones only. It is often cast just to stall, and with the
     --             "Only track Lord of Bones stalls" setting on, casts made while
     --             wearing Necromancy gear are ignored.
@@ -67,6 +72,7 @@ local settings = {
             key = "AnimateDead",
             name = "Animate Dead",
             timer = { var = "COMBATV2_GENERIC_BASE_VAR_7", mask = 0xff000000, shift = 24, per_cast = 48 },
+            counted_by_rune = "Soul rune",
             runes = {
                 ["Earth rune"] = 30,
                 ["Death rune"] = 15,
@@ -78,6 +84,7 @@ local settings = {
             key = "Vampyrism",
             name = "Vampyrism",
             timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0x3ff00, shift = 8, per_cast = 48 },
+            counted_by_rune = "Soul rune",
             runes = {
                 ["Fire rune"] = 40,
                 ["Death rune"] = 10,
@@ -89,6 +96,7 @@ local settings = {
             key = "Penance",
             name = "Penance",
             timer = { var = "COMBATV2_GENERIC_BASE_VAR_8", mask = 0xff, shift = 0, per_cast = 48 },
+            counted_by_rune = "Soul rune",
             runes = {
                 ["Body rune"] = 30,
                 ["Chaos rune"] = 20,
@@ -111,6 +119,13 @@ local settings = {
                 ["Miasma rune"] = 5,
             },
         },
+    },
+
+    -- The game values (VarClient ids) holding how many of a rune the player has
+    -- in the backpack and rune pouches together. The game has these for the
+    -- standard runes but not for Necromancy runes.
+    rune_count_var_ids = {
+        ["Soul rune"] = 5905, -- COMBATV2_RUNECOUNT_SOUL
     },
 
     -- The game's item id for each rune, used to look up its Grand Exchange price

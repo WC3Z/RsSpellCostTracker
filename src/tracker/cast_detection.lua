@@ -19,6 +19,10 @@
 -- cast, so it is counted as 1. The game doesn't allow a multi-cast when the
 -- spell is nearly full (e.g. at 59 minutes), so this only happens when
 -- there is room for at least one more cast.
+--
+-- Spells with counted_by_rune get a second opinion from the runes used, see
+-- rune_count_casts.lua. That fixes both the gap above and quick casts that
+-- land in the same moment and look like a multi-cast.
 ---@class CastDetection
 ---@field spells Spell[]
 ---@field cast_ticks table<string, integer> When each cast_tick_var spell was last cast, by game value name
