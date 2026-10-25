@@ -34,9 +34,11 @@ function tests.history_lines()
     })
 
     assert_helpers.same_lines(lines, {
-        "24 Oct 14:05 - 1h 12m - 1,234,567 gp",
+        "24 Oct 14:05 - 1h 12m - 1234K",
         "Unknown start - 5m - 90 gp",
     })
+    assert_helpers.equal(lines[1].tooltip, "1,234,567 gp")
+    assert_helpers.equal(lines[2], "Unknown start - 5m - 90 gp")
 end
 
 function tests.history_lines_when_empty()

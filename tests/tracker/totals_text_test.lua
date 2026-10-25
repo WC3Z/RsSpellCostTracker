@@ -105,9 +105,38 @@ function tests.can_leave_out_the_runes_and_cost()
 end
 
 function tests.formats_cost_with_thousand_separators()
+    local lines = totals_text.cost_lines({ spell("Darkness", "Darkness", { gp = 12345 }) })
+
+    assert_helpers.same_lines(lines, { "Darkness: 12,345 gp", "Total: 12,345 gp" })
+end
+
+function tests.shortens_large_costs_with_the_full_amount_in_a_tooltip()
     local lines = totals_text.cost_lines({ spell("Darkness", "Darkness", { gp = 1234567 }) })
 
-    assert_helpers.same_lines(lines, { "Darkness: 1,234,567 gp", "Total: 1,234,567 gp" })
+    assert_helpers.same_lines(lines, { "Darkness: 1234K", "Total: 1234K" })
+    assert_helpers.equal(lines[1].tooltip, "1,234,567 gp")
+    assert_helpers.equal(lines[2].tooltip, "1,234,567 gp")
+end
+
+function tests.shortened_cost_still_notes_items_without_a_price()
+    local lines = totals_text.cost_lines({
+        spell("Darkness", "Darkness", { gp = 23456789, unpriced_items = { "Bone rune" } }),
+    })
+
+    assert_helpers.equal(lines[1].text, "Darkness: 23M (no price: Bone rune)")
+    assert_helpers.equal(lines[1].tooltip, "23,456,789 gp")
+end
+
+function tests.puts_the_full_estimated_amount_before_the_runes_in_its_tooltip()
+    local big_estimate = spell("Darkness", "Darkness", { estimated_gp = 150000, estimated_items = { "Bone rune" } })
+
+    local lines = totals_text.cost_lines({ big_estimate })
+
+    assert_helpers.equal(lines[#lines].text, "Estimated: 150K")
+    assert_helpers.equal(
+        lines[#lines].tooltip,
+        "150,000 gp. The part of the cost that uses rough prices, because the real price wasn't available for: Bone rune"
+    )
 end
 
 function tests.formats_small_cost_without_leading_separator()
@@ -194,6 +223,20 @@ function tests.cost_lines_say_so_when_nothing_has_been_cast()
     local lines = totals_text.cost_lines({ penance_not_cast })
 
     assert_helpers.same_lines(lines, { "No spells cast yet" })
+end
+
+function tests.short_gp_keeps_amounts_below_100k_in_full()
+    assert_helpers.equal(totals_text.format_gp_short(99999), "99,999 gp")
+end
+
+function tests.short_gp_rounds_down_to_whole_units_like_the_game()
+    assert_helpers.equal(totals_text.format_gp_short(100000), "100K")
+    assert_helpers.equal(totals_text.format_gp_short(9999999), "9999K")
+    assert_helpers.equal(totals_text.format_gp_short(10000000), "10M")
+    assert_helpers.equal(totals_text.format_gp_short(2147483647), "2147M")
+    assert_helpers.equal(totals_text.format_gp_short(9999999999), "9999M")
+    assert_helpers.equal(totals_text.format_gp_short(10000000000), "10B")
+    assert_helpers.equal(totals_text.format_gp_short(12345678901), "12B")
 end
 
 return tests

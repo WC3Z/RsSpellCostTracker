@@ -55,7 +55,8 @@ function session_text.status(state, minutes)
     return "Session " .. state .. " - " .. session_text.duration(minutes)
 end
 
--- One line per past session, e.g. "24 Oct 14:05 - 1h 12m - 9,060 gp".
+-- One line per past session, e.g. "24 Oct 14:05 - 1h 12m - 9,060 gp", with the
+-- full gp in a tooltip when it's shortened.
 ---@param entries PastSession[]
 ---@return Line[]
 function session_text.history_lines(entries)
@@ -65,7 +66,8 @@ function session_text.history_lines(entries)
     local lines = {}
     for _, entry in ipairs(entries) do
         local started = entry.started_at and session_text.date(entry.started_at) or "Unknown start"
-        table.insert(lines, started .. " - " .. session_text.duration(entry.minutes) .. " - " .. totals_text.format_gp(entry.gp))
+        local label = started .. " - " .. session_text.duration(entry.minutes) .. " - "
+        table.insert(lines, totals_text.gp_line(label, entry.gp))
     end
     return lines
 end
