@@ -4,7 +4,7 @@
 #   ./build.sh           dev build, plugin.json as it is in the repo
 #   ./build.sh release   release build, depends on the published gepl plugin
 #
-# To also copy the build into your game's dev_plugins folder, create
+# To also copy dev builds into your game's dev_plugins folder, create
 # build.local.sh (gitignored) with e.g.:
 #
 #   dev_plugins_dir="$HOME/path/to/RuneScape-BETA/dev_plugins"
@@ -42,7 +42,7 @@ fi
 
 echo "Built $out_dir ($build_type)"
 
-if [[ -n "$dev_plugins_dir" ]]; then
+if [[ "$build_type" == "dev" && -n "$dev_plugins_dir" ]]; then
     if [[ ! -d "$dev_plugins_dir" ]]; then
         echo "dev_plugins folder not found: $dev_plugins_dir" >&2
         exit 1
