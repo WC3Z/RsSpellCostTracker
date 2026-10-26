@@ -38,7 +38,6 @@ local function callbacks(overrides)
         cost_lines = function() return { "Cost: 4,530 gp" } end,
         settings_changed = function() end,
         open_window = function() end,
-        reset_totals = function() end,
     }
     for name, callback in pairs(overrides or {}) do
         result[name] = callback
@@ -124,25 +123,6 @@ function tests.open_cost_tracker_button_opens_the_window()
     costs_tab(view).buttons["Open cost tracker"]()
 
     assert_helpers.equal(opened, true)
-    content_view.stop()
-end
-
-function tests.reset_totals_button_asks_for_confirmation_first()
-    local subscriptions, created = install_fakes()
-    local resets = 0
-    content_view.start(callbacks({ reset_totals = function() resets = resets + 1 end }))
-    local view = open_page(subscriptions, created)
-
-    costs_tab(view).buttons["Reset totals"]()
-
-    local dialog = created[#created]
-    assert_helpers.equal(dialog.kind, "Confirm")
-    assert_helpers.equal(dialog.parent, page_component)
-    assert_helpers.equal(resets, 0)
-
-    dialog.options.onConfirm()
-
-    assert_helpers.equal(resets, 1)
     content_view.stop()
 end
 

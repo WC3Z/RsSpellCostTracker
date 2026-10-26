@@ -76,17 +76,6 @@ local function settings_changed()
     refresh_views()
 end
 
--- Sets every spell back to zero, both in the trackers and in what is saved.
--- A running session keeps running from zero.
-local function reset_totals()
-    tracker:reset()
-    for _, spell in ipairs(settings.spells) do
-        saved_totals.save(spell, tracker:spell_totals(spell))
-    end
-    session:reset()
-    refresh_views()
-end
-
 -- The cost of everything cast in the session, as it is shown (so at shop
 -- prices with "Iron btw" on).
 ---@return number
@@ -159,7 +148,6 @@ content_view.start({
     cost_lines = page_lines,
     settings_changed = settings_changed,
     open_window = open_cost_tracker,
-    reset_totals = reset_totals,
 })
 
 -- Called by the game when the plugin is turned off.
