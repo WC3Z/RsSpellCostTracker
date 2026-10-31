@@ -15,6 +15,7 @@ local test_files = {
     "tests/game/session_test",
     "tests/game/session_history_test",
     "tests/game/game_clock_test",
+    "tests/game/account_storage_test",
     "tests/interface/player_settings_test",
     "tests/interface/text_lines_test",
     "tests/interface/content_view_test",

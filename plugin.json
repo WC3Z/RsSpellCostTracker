@@ -6,5 +6,8 @@
         "gepl": "gepl",
         "prettyui": 6398181
     },
-    "hasRibbonIcon": true
+    "hasRibbonIcon": true,
+    "optionalPermissions": [
+        "trackingAccess"
+    ]
 }

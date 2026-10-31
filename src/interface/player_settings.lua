@@ -1,5 +1,7 @@
 -- The settings the player picks on the plugin's page. They are saved in the
--- game's plugin storage (PersistentDB), so they're kept between restarts.
+-- game's plugin storage for each game account (see account_storage.lua), so
+-- they're kept between restarts.
+local storage = require("src/game/account_storage")
 local settings = require("src/config")
 
 local player_settings = {}
@@ -71,7 +73,7 @@ end
 ---@param option PlayerSetting
 ---@return boolean
 function player_settings.is_on(option)
-    local saved = PersistentDB:GetBool(option.db_key)
+    local saved = storage.get_bool(option.db_key)
     if saved == nil then
         return not option.off_by_default
     end
@@ -81,7 +83,7 @@ end
 ---@param option PlayerSetting
 ---@param on boolean
 function player_settings.set(option, on)
-    PersistentDB:SetBool(option.db_key, on)
+    storage.set_bool(option.db_key, on)
 end
 
 ---@return boolean

@@ -14,6 +14,7 @@ local player_settings = require("src/interface/player_settings")
 local content_view = require("src/interface/content_view")
 local cost_tracker_window = require("src/interface/cost_tracker_window")
 local session_history_window = require("src/interface/session_history_window")
+local account_storage = require("src/game/account_storage")
 
 ---@type SpellTrackerOptions
 local tracker_options = {
@@ -134,6 +135,18 @@ local function on_cast(spell, casts)
     refresh_views()
 end
 
+-- Each game account has its own totals, session and settings, so they're
+-- loaded again whenever the account changes, like logging into another one.
+local function load_account()
+    tracker:restore(saved_totals.load(settings.spells))
+    session:reload()
+    cost_tracker_window.set_transparent(player_settings.transparent_window())
+    refresh_views()
+    session_history_window.refresh(history_lines())
+end
+
+account_storage.on_change(load_account)
+account_storage.start()
 cost_tracker_window.set_transparent(player_settings.transparent_window())
 cost_tracker_window.set_session_controls({
     pause = pause_session,
@@ -152,6 +165,7 @@ content_view.start({
 
 -- Called by the game when the plugin is turned off.
 function PluginShutdown()
+    account_storage.stop()
     content_view.stop()
     cost_tracker_window.destroy()
     session_history_window.destroy()

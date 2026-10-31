@@ -11,6 +11,7 @@
 -- The totals are saved with the "Session" prefix (see saved_totals.lua), and
 -- the state and times under their own keys, so a session carries on after a
 -- restart or crash.
+local storage = require("src/game/account_storage")
 local SpellTracker = require("src/tracker/spell_tracker")
 local saved_totals = require("src/game/saved_totals")
 
@@ -44,7 +45,7 @@ local state_numbers = { running = 1, paused = 2 }
 ---@param db_key string
 ---@return integer?
 local function load_whole_number(db_key)
-    local value = PersistentDB:Get(db_key)
+    local value = storage.get(db_key)
     if value == nil then
         return nil
     end
@@ -61,9 +62,16 @@ function Session.new(tracker_options)
     return self
 end
 
+-- Loads the session saved for the account now playing, like after switching
+-- accounts.
+function Session:reload()
+    self.tracker:restore(saved_totals.load(self.spells, saved_prefix))
+    self.last_clock = nil
+end
+
 ---@return SessionState
 function Session:state()
-    if PersistentDB:Get(state_key) == state_numbers.running then
+    if storage.get(state_key) == state_numbers.running then
         return "running"
     end
     return "paused"
@@ -71,7 +79,7 @@ end
 
 ---@param state SessionState
 local function set_state(state)
-    PersistentDB:Set(state_key, state_numbers[state])
+    storage.set(state_key, state_numbers[state])
 end
 
 -- The game clock (in minutes) when the session started, or nil if not known.
@@ -103,8 +111,8 @@ end
 ---@param now integer? The game clock, nil if not known yet
 function Session:start(now)
     self:reset()
-    PersistentDB:Set(started_at_key, now or unknown_time)
-    PersistentDB:Set(minutes_key, 0)
+    storage.set(started_at_key, now or unknown_time)
+    storage.set(minutes_key, 0)
     set_state("running")
 end
 
@@ -114,7 +122,7 @@ end
 
 function Session:resume()
     if self:started_at() == nil and self.last_clock then
-        PersistentDB:Set(started_at_key, self.last_clock)
+        storage.set(started_at_key, self.last_clock)
     end
     set_state("running")
 end
@@ -143,14 +151,14 @@ function Session:on_clock(now)
         return
     end
     if self:started_at() == nil then
-        PersistentDB:Set(started_at_key, now)
+        storage.set(started_at_key, now)
     end
     if last == nil then
         return
     end
     local step = now - last
     if step > 0 and step <= max_clock_step then
-        PersistentDB:Set(minutes_key, self:minutes() + step)
+        storage.set(minutes_key, self:minutes() + step)
     end
 end
 

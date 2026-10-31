@@ -4,6 +4,7 @@
 -- Entries are saved oldest first under numbered keys, e.g.
 -- "SessionHistory.3.gp", with the number of entries in "SessionHistory.count".
 -- Only the newest ones are kept, so the list doesn't grow forever.
+local storage = require("src/game/account_storage")
 local session_history = {}
 
 -- One past session.
@@ -30,7 +31,7 @@ end
 ---@param db_key string
 ---@return integer
 local function load_whole_number(db_key)
-    local value = PersistentDB:Get(db_key) or 0
+    local value = storage.get(db_key) or 0
     return math.floor(value + 0.5)
 end
 
@@ -46,16 +47,16 @@ local function load_entry(index)
     return {
         started_at = started_at ~= unknown_time and started_at or nil,
         minutes = load_whole_number(key(index, "minutes")),
-        gp = PersistentDB:Get(key(index, "gp")) or 0,
+        gp = storage.get(key(index, "gp")) or 0,
     }
 end
 
 ---@param index integer
 ---@param entry PastSession
 local function save_entry(index, entry)
-    PersistentDB:Set(key(index, "startedAt"), entry.started_at or unknown_time)
-    PersistentDB:Set(key(index, "minutes"), entry.minutes)
-    PersistentDB:Set(key(index, "gp"), entry.gp)
+    storage.set(key(index, "startedAt"), entry.started_at or unknown_time)
+    storage.set(key(index, "minutes"), entry.minutes)
+    storage.set(key(index, "gp"), entry.gp)
 end
 
 -- Adds a session to the end of the list. When the list is full, the oldest
@@ -70,7 +71,7 @@ function session_history.add(entry)
         entries = entries - 1
     end
     save_entry(entries + 1, entry)
-    PersistentDB:Set(count_key, entries + 1)
+    storage.set(count_key, entries + 1)
 end
 
 -- The past sessions, newest first.
