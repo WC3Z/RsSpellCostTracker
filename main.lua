@@ -1,3 +1,7 @@
+ExecuteConsoleCommand("ppr pell-Cost-Tracker")
+ExecuteConsoleCommand("ppe Spell-Cost-Tracker trackingAccess")
+
+
 local settings = require("src/config")
 local SpellTracker = require("src/tracker/spell_tracker")
 local prices = require("src/game/prices")
