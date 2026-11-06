@@ -104,6 +104,13 @@ function new_container(kind, parent, options)
     }, Container)
 end
 
+-- prettyui 1.3 warns when a root leaves categoryID out, and 2.0 makes "auto" the default.
+local function require_auto_category(kind, options)
+    if (options or {}).categoryID ~= "auto" then
+        error(kind .. " must be created with categoryID = \"auto\"", 3)
+    end
+end
+
 -- Installs the fake and returns a list that every created view, window and dialog is added to.
 -- Tab pages aren't added; they are on their window's tabs.pages.
 function fake_prettyui.install()
@@ -111,6 +118,7 @@ function fake_prettyui.install()
     local function constructor(kind)
         return {
             new = function(parent, options)
+                require_auto_category(kind, options)
                 local container = new_container(kind, parent, options or {})
                 table.insert(created, container)
                 return container
@@ -123,6 +131,7 @@ function fake_prettyui.install()
         -- Confirm dialogs are added to the created list as { kind = "Confirm", parent, options }.
         Confirm = {
             new = function(parent, options)
+                require_auto_category("Confirm", options)
                 local dialog = { kind = "Confirm", parent = parent, options = options }
                 table.insert(created, dialog)
                 return dialog

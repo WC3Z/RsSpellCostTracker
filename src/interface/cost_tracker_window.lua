@@ -89,6 +89,7 @@ end
 -- can't be counted again afterwards. Its time and cost go to the history.
 local function confirm_new_session()
     prettyui.Confirm.new(game_area(), {
+        categoryID = "auto",
         title = "New session",
         body = "This starts a new session from zero. The current one is moved to the past sessions.",
         confirmLabel = "START",
@@ -142,6 +143,7 @@ end
 local function create(pages, bounds, active_tab)
     bounds = bounds or { width = 260, height = 160 }
     window = prettyui.Window.new(game_area(), {
+        categoryID = "auto",
         title = "Spell costs",
         x = bounds.x,
         y = bounds.y,

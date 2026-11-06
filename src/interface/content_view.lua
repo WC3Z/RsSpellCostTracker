@@ -52,6 +52,7 @@ function content_view.start(callbacks)
 
         local parent = event.component
         view = prettyui.SimpleView.new(parent, {
+            categoryID = "auto",
             width = parent.width,
             height = parent.height,
             -- The tabs scroll instead, see below.

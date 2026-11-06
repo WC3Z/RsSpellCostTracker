@@ -22,6 +22,7 @@ function session_history_window.open(lines)
         return
     end
     window = prettyui.Window.new(game_area(), {
+        categoryID = "auto",
         title = "Past sessions",
         width = 260,
         height = 160,

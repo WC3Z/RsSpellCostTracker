@@ -4,7 +4,7 @@ local assert_helpers = require("tests/helpers/assert")
 
 local function new_view()
     fake_prettyui.install()
-    return prettyui.SimpleView.new()
+    return prettyui.SimpleView.new(nil, { categoryID = "auto" })
 end
 
 local tests = {}
