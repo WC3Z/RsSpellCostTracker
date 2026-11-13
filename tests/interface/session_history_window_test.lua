@@ -124,4 +124,48 @@ function tests.removing_the_window_saves_where_it_is()
     assert_helpers.equal(stored["SessionHistoryWindow.y"], 305)
 end
 
+function tests.closing_the_window_saves_how_big_it_is()
+    local created, stored = install_fakes()
+    session_history_window.open({ "a" })
+    created[1].root.width, created[1].root.height = 400.7, 250
+
+    created[1]:Close()
+
+    assert_helpers.equal(stored["SessionHistoryWindow.width"], 400)
+    assert_helpers.equal(stored["SessionHistoryWindow.height"], 250)
+end
+
+function tests.removing_the_window_saves_how_big_it_is()
+    local created, stored = install_fakes()
+    session_history_window.open({ "a" })
+    created[1].root.width, created[1].root.height = 400, 250
+
+    session_history_window.destroy()
+
+    assert_helpers.equal(stored["SessionHistoryWindow.width"], 400)
+    assert_helpers.equal(stored["SessionHistoryWindow.height"], 250)
+end
+
+function tests.opens_as_big_as_it_was_last_left()
+    local created, stored = install_fakes()
+    stored["SessionHistoryWindow.width"] = 400
+    stored["SessionHistoryWindow.height"] = 250
+
+    session_history_window.open({ "a" })
+
+    assert_helpers.equal(created[1].options.width, 400)
+    assert_helpers.equal(created[1].options.height, 250)
+    session_history_window.destroy()
+end
+
+function tests.opens_at_the_default_size_the_first_time()
+    local created = install_fakes()
+
+    session_history_window.open({ "a" })
+
+    assert_helpers.equal(created[1].options.width, 260)
+    assert_helpers.equal(created[1].options.height, 160)
+    session_history_window.destroy()
+end
+
 return tests
