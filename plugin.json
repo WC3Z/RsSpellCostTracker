@@ -1,6 +1,6 @@
 {
     "name": "Spell Cost Tracker",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "contactEmailAddress": "wc3zrs@gmail.com",
     "requiredDependencies": {
         "gepl": "gepl",
