@@ -162,4 +162,15 @@ function tests.stop_unsubscribes_and_destroys_the_view()
     assert_helpers.equal(next(subscriptions), nil)
 end
 
+function tests.checkboxes_are_as_wide_as_their_label_so_tooltips_show_by_it()
+    local subscriptions, created = install_fakes()
+    content_view.start(callbacks())
+
+    local view = open_page(subscriptions, created)
+
+    local checkbox = settings_tab(view).checkboxes.showCasts
+    assert_helpers.equal(checkbox.width, #"Show cast count" * 10)
+    content_view.stop()
+end
+
 return tests

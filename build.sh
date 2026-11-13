@@ -2,7 +2,8 @@
 # Copies the plugin into Spell-Cost-Tracker/, leaving out the tests.
 #
 #   ./build.sh           dev build, plugin.json as it is in the repo
-#   ./build.sh release   release build, without console commands, depends on the published gepl plugin
+#   ./build.sh release   release build, without console commands, depends on the published gepl plugin.
+#                        Also zipped into Spell-Cost-Tracker.zip, ready to upload
 #
 # To also copy dev builds into your game's dev_plugins folder, create
 # build.local.sh (gitignored) with e.g.:
@@ -48,6 +49,18 @@ if [[ "$build_type" == "release" ]]; then
 fi
 
 echo "Built $out_dir ($build_type)"
+
+if [[ "$build_type" == "release" ]]; then
+    if ! command -v zip > /dev/null; then
+        echo "zip is not installed, so $out_dir was not zipped" >&2
+        exit 1
+    fi
+    zip_file="$out_dir.zip"
+    # zip adds to an existing archive, which would keep files that have since been removed.
+    rm -f "$zip_file"
+    zip -qr "$zip_file" "$out_dir"
+    echo "Zipped to $zip_file"
+fi
 
 if [[ "$build_type" == "dev" && -n "$dev_plugins_dir" ]]; then
     if [[ ! -d "$dev_plugins_dir" ]]; then

@@ -3,6 +3,7 @@
 -- the current session, with buttons to pause or resume it, start a new one and
 -- show the past sessions.
 local TextLines = require("src/interface/text_lines")
+local window_position = require("src/interface/window_position")
 
 local cost_tracker_window = {}
 
@@ -35,6 +36,8 @@ local session_controls
 ---@type SessionState
 local session_state = "paused"
 local pause_resume_button
+
+local position_key = "CostTrackerWindow"
 
 -- The background's colour as 0xRRGGBBAA. White leaves the background image as
 -- it is, and the last two digits set how see-through it is (FF = solid).
@@ -138,10 +141,13 @@ local function refresh_tabs_on_resize()
 end
 
 ---@param pages WindowPages
----@param bounds? WindowBounds Without it the window opens in prettyui's default spot
+---@param bounds? WindowBounds Without it the window opens where it was last dragged to, or prettyui's default spot
 ---@param active_tab? integer Which tab is open, 1 if left out
 local function create(pages, bounds, active_tab)
-    bounds = bounds or { width = 260, height = 160 }
+    if not bounds then
+        local x, y = window_position.load(position_key)
+        bounds = { x = x, y = y, width = 260, height = 160 }
+    end
     window = prettyui.Window.new(game_area(), {
         categoryID = "auto",
         title = "Spell costs",
@@ -157,10 +163,12 @@ local function create(pages, bounds, active_tab)
         -- The tabs scroll instead, see below.
         scrollable = false,
         destroyOnClose = true,
-        onClose = function()
+        onClose = function(closing)
+            window_position.save_from(position_key, closing)
             window = nil
             tabs = nil
         end,
+        onPositionChange = window_position.saver(position_key),
     })
     apply_transparency()
     refresh_tabs_on_resize()
@@ -177,6 +185,7 @@ local function create(pages, bounds, active_tab)
 end
 
 local function remove()
+    window_position.save_from(position_key, window)
     window:Destroy()
     window = nil
     tabs = nil

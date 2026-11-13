@@ -19,14 +19,19 @@ local text
 ---@param page table The prettyui tab page to add it to
 ---@param option PlayerSetting
 local function add_checkbox(page, option)
-    page:AddCheckboxButton({
+    local items = {
         {
             text = option.label,
             value = option.db_key,
             selected = player_settings.is_on(option),
             tooltip = option.tooltip,
         },
-    }, {
+    }
+    page:AddCheckboxButton(items, {
+        -- prettyui makes the checkbox as wide as the page unless given a width,
+        -- and shows its tooltip to the right of that, outside the page. Fitted
+        -- to its label, the tooltip shows by the label instead.
+        width = (prettyui.CheckboxButton.getSize(items)),
         onChange = function(_, _, _, selected)
             player_settings.set(option, selected)
             on_settings_changed()

@@ -1,10 +1,12 @@
 local cost_tracker_window = require("src/interface/cost_tracker_window")
 local fake_prettyui = require("tests/helpers/fake_prettyui")
+local fake_persistent_db = require("tests/helpers/fake_persistent_db")
 local assert_helpers = require("tests/helpers/assert")
 
 local game_area = { width = 1920, height = 1080 }
 
 -- Fakes for the game's ui and id globals, which give us the main game screen.
+-- Also returns the saved values (see fake_persistent_db), after the created list.
 local function install_fakes()
     id = { Component = { TOPLEVEL_V2__GAME_AREA = 42 } }
     ui = {
@@ -14,7 +16,8 @@ local function install_fakes()
             end,
         },
     }
-    return fake_prettyui.install()
+    local stored = fake_persistent_db.install()
+    return fake_prettyui.install(), stored
 end
 
 -- The lines for the window, with the session tab empty and paused unless given.
@@ -320,6 +323,61 @@ function tests.stays_transparent_when_rebuilt_or_reopened()
     assert_helpers.equal(created[3].background.rgba < 0xFFFFFFFF, true)
     cost_tracker_window.set_transparent(false)
     cost_tracker_window.destroy()
+end
+
+function tests.dragging_the_window_saves_where_it_is()
+    local created, stored = install_fakes()
+    cost_tracker_window.open(pages({ "a" }))
+
+    created[1].options.onPositionChange(created[1], 310.6, 205)
+
+    assert_helpers.equal(stored["CostTrackerWindow.x"], 310)
+    assert_helpers.equal(stored["CostTrackerWindow.y"], 205)
+    cost_tracker_window.destroy()
+end
+
+function tests.opens_where_it_was_last_dragged_to()
+    local created, stored = install_fakes()
+    stored["CostTrackerWindow.x"] = 310
+    stored["CostTrackerWindow.y"] = 205
+
+    cost_tracker_window.open(pages({ "a" }))
+
+    assert_helpers.equal(created[1].options.x, 310)
+    assert_helpers.equal(created[1].options.y, 205)
+    cost_tracker_window.destroy()
+end
+
+function tests.opens_in_the_default_spot_when_never_dragged()
+    local created = install_fakes()
+
+    cost_tracker_window.open(pages({ "a" }))
+
+    assert_helpers.equal(created[1].options.x, nil)
+    assert_helpers.equal(created[1].options.y, nil)
+    cost_tracker_window.destroy()
+end
+
+function tests.closing_the_window_saves_where_it_is()
+    local created, stored = install_fakes()
+    cost_tracker_window.open(pages({ "a" }))
+    created[1].root.x, created[1].root.y = 410, 305
+
+    created[1]:Close()
+
+    assert_helpers.equal(stored["CostTrackerWindow.x"], 410)
+    assert_helpers.equal(stored["CostTrackerWindow.y"], 305)
+end
+
+function tests.removing_the_window_saves_where_it_is()
+    local created, stored = install_fakes()
+    cost_tracker_window.open(pages({ "a" }))
+    created[1].root.x, created[1].root.y = 410, 305
+
+    cost_tracker_window.destroy()
+
+    assert_helpers.equal(stored["CostTrackerWindow.x"], 410)
+    assert_helpers.equal(stored["CostTrackerWindow.y"], 305)
 end
 
 return tests

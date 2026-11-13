@@ -1,12 +1,15 @@
 -- A small, movable window listing past sessions, opened from the Session tab
 -- of the cost tracker window.
 local TextLines = require("src/interface/text_lines")
+local window_position = require("src/interface/window_position")
 
 local session_history_window = {}
 
 local window
 ---@type TextLines
 local text
+
+local position_key = "SessionHistoryWindow"
 
 -- The main game screen, so the window can be moved anywhere over the game.
 local function game_area()
@@ -21,19 +24,24 @@ function session_history_window.open(lines)
         text:set(lines)
         return
     end
+    local x, y = window_position.load(position_key)
     window = prettyui.Window.new(game_area(), {
         categoryID = "auto",
         title = "Past sessions",
+        x = x,
+        y = y,
         width = 260,
         height = 160,
         resizable = true,
         minWidth = 120,
         minHeight = 60,
         destroyOnClose = true,
-        onClose = function()
+        onClose = function(closing)
+            window_position.save_from(position_key, closing)
             window = nil
             text = nil
         end,
+        onPositionChange = window_position.saver(position_key),
     })
     text = TextLines.new(window)
     text:set(lines)
@@ -52,6 +60,7 @@ end
 -- Removes the window, e.g. when the plugin is turned off.
 function session_history_window.destroy()
     if window then
+        window_position.save_from(position_key, window)
         window:Destroy()
         window = nil
         text = nil

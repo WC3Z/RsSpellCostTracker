@@ -26,6 +26,7 @@ function Container:AddCheckboxButton(buttons, options)
         text = buttons[1].text,
         selected = buttons[1].selected,
         tooltip = buttons[1].tooltip,
+        width = options.width,
         on_change = options.onChange,
     }
     self.checkboxes[buttons[1].value] = checkbox
@@ -127,6 +128,16 @@ function fake_prettyui.install()
     end
     prettyui = {
         SimpleView = constructor("SimpleView"),
+        -- Measures a checkbox group as 10 per character of its longest label.
+        CheckboxButton = {
+            getSize = function(items)
+                local longest = 0
+                for _, item in ipairs(items) do
+                    longest = math.max(longest, #item.text)
+                end
+                return longest * 10, #items * 22
+            end,
+        },
         Window = constructor("Window"),
         -- Confirm dialogs are added to the created list as { kind = "Confirm", parent, options }.
         Confirm = {
